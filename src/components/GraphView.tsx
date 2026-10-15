@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { pyRepr } from '../engine/pyrepr';
-import { END, HUB, START, type Frame, type Packet, type StateValues } from '../engine/types';
+import { END, HUB, type Frame, type Packet, type StateValues } from '../engine/types';
 import {
   buildScene,
   HUB_HEAD,
@@ -45,7 +45,7 @@ interface Props {
 
 export function GraphView({ built, frame, interval }: Props) {
   const scene = useMemo(() => buildScene(built.graph, built.layout), [built]);
-  const { width, height } = built.layout;
+  const vb = useMemo(() => sceneBounds(scene, built), [scene, built]);
   const duration = Math.max(450, Math.min(1100, interval * 0.62));
 
   const routerActive = frame.router?.routerId;
@@ -66,8 +66,7 @@ export function GraphView({ built, frame, interval }: Props) {
       if (p.kind === 'read' && p.from === hubId) p.keys?.forEach((k) => read.add(k));
       if (p.kind === 'write' && p.to === hubId) p.keys?.forEach((k) => write.add(k));
     }
-    const isSubHub = hubId !== HUB;
-    const changed = new Set(isSubHub ? (frame.sub?.changedKeys ?? []) : frame.changedKeys);
+    const changed = new Set(hubId !== HUB ? (frame.sub?.changedKeys ?? []) : frame.changedKeys);
     return { read, write, changed };
   };
 
@@ -78,29 +77,13 @@ export function GraphView({ built, frame, interval }: Props) {
   };
 
   return (
-    <svg className="graph-svg" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet">
+    <svg className="graph-svg" viewBox={vb} preserveAspectRatio="xMidYMid meet" role="img" aria-label="그래프">
       <defs>
         {(['base', 'active', 'cond', 'cmd', 'dim'] as const).map((k) => (
-          <marker
-            key={k}
-            id={`arrow-${k}`}
-            viewBox="0 0 10 10"
-            refX="9"
-            refY="5"
-            markerWidth="7"
-            markerHeight="7"
-            orient="auto-start-reverse"
-          >
-            <path d="M0,0 L10,5 L0,10 z" className={`arrowhead arrowhead-${k}`} />
+          <marker key={k} id={`arrow-${k}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,1 L9,5 L0,9 z" className={`arrowhead arrowhead-${k}`} />
           </marker>
         ))}
-        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="5" result="b" />
-          <feMerge>
-            <feMergeNode in="b" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
       </defs>
 
       {scene.nodes
@@ -120,6 +103,8 @@ export function GraphView({ built, frame, interval }: Props) {
             <HubView key={n.id} n={n} values={hubValues(n.id)} hl={hubHighlights(n.id)} />
           ) : n.kind === 'router' ? (
             <RouterView key={n.id} n={n} frame={frame} />
+          ) : n.kind === 'start' || n.kind === 'end' ? (
+            <TerminalView key={n.id} n={n} frame={frame} />
           ) : (
             <NodeView key={n.id} n={n} frame={frame} sends={sendGroups.get(n.id)} />
           ),
@@ -134,25 +119,68 @@ export function GraphView({ built, frame, interval }: Props) {
   );
 }
 
+/** 고정폭 글꼴 기준 폭(한글 등 전각 문자는 약 1.7칸)에 맞춰 자른다 */
+function fitWidth(text: string, units: number) {
+  let used = 0;
+  let out = '';
+  for (const ch of text) {
+    const w = /[\u1100-\u11ff\u3000-\u9fff\uac00-\ud7af\uff00-\uffef]/.test(ch) ? 1.7 : 1;
+    if (used + w > units - 1) return out + '…';
+    used += w;
+    out += ch;
+  }
+  return out;
+}
+
+/** 레이아웃의 고정 크기 대신 실제 그려지는 요소의 경계로 viewBox 를 잡아 화면을 꽉 채운다 */
+function sceneBounds(scene: { nodes: VNode[]; edges: VEdge[] }, built: Built) {
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  const add = (x: number, y: number) => {
+    x0 = Math.min(x0, x);
+    y0 = Math.min(y0, y);
+    x1 = Math.max(x1, x);
+    y1 = Math.max(y1, y);
+  };
+  for (const n of scene.nodes) {
+    const extraTop = n.kind === 'router' ? 26 : n.kind === 'node' ? 16 : 0;
+    const extraBottom = n.kind === 'start' || n.kind === 'end' ? 22 : n.kind === 'router' ? 26 : 0;
+    add(n.x - n.w / 2, n.y - n.h / 2 - extraTop);
+    add(n.x + n.w / 2, n.y + n.h / 2 + extraBottom);
+  }
+  for (const e of scene.edges) for (const sg of e.segs) add((sg.p0.x + 2 * sg.c.x + sg.p1.x) / 4, (sg.p0.y + 2 * sg.c.y + sg.p1.y) / 4);
+  for (const p of built.layout.reserve ?? []) add(p.x, p.y);
+  const padX = 36;
+  const top = 78; // 왼쪽 위 SUPER-STEP 표시와 겹치지 않도록
+  return `${x0 - padX} ${y0 - top} ${x1 - x0 + padX * 2} ${y1 - y0 + top + 24}`;
+}
+
 function ContainerNode({ n, frame }: { n: VNode; frame: Frame }) {
   const active = frame.activeNodes.includes(n.id);
   const runs = frame.nodeRuns[n.id];
+  const x0 = n.x - n.w / 2;
+  const y0 = n.y - n.h / 2;
   return (
-    <g className={`container ${active ? 'active' : ''} ${runs ? 'ran' : ''}`}>
-      <rect x={n.x - n.w / 2} y={n.y - n.h / 2} width={n.w} height={n.h} rx={14} />
-      <text x={n.x - n.w / 2 + 14} y={n.y - n.h / 2 + 20} className="container-label">
-        {n.label}
-        <tspan className="container-sub"> · subgraph (컴파일된 그래프를 노드로 사용)</tspan>
+    <g className={`container ${active ? 'active' : ''}`}>
+      <rect x={x0} y={y0} width={n.w} height={n.h} rx={8} />
+      <text x={x0 + 14} y={y0 + 20} className="container-label">
+        <tspan className="container-kind">SUBGRAPH</tspan>
+        <tspan dx={8}>{n.label}</tspan>
       </text>
-      {runs && <StepBadges x={n.x + n.w / 2 - 8} y={n.y - n.h / 2} steps={runs} />}
+      {runs && (
+        <text x={x0 + n.w - 12} y={y0 + 20} className="step-mark" textAnchor="end">
+          s{runs.join(',')}
+        </text>
+      )}
     </g>
   );
 }
 
 function EdgeView({ e, frame, routerActive }: { e: VEdge; frame: Frame; routerActive?: string }) {
   const active = frame.activeEdges.includes(e.id);
-  const routed = routerActive && e.router === routerActive && !frame.router?.pending;
-  const dim = routed && !active;
+  const dim = routerActive && e.router === routerActive && !frame.router?.pending && !active;
   const kind = e.kind === 'command' ? 'cmd' : e.kind.startsWith('cond') ? 'cond' : 'base';
   const marker = e.kind === 'cond-in' ? undefined : `url(#arrow-${active ? 'active' : dim ? 'dim' : kind})`;
   const mid = pointAt(e.segs, 0.5);
@@ -161,9 +189,9 @@ function EdgeView({ e, frame, routerActive }: { e: VEdge; frame: Frame; routerAc
       {e.segs.map((s, i) => (
         <path key={i} d={segPath(s)} markerEnd={i === e.segs.length - 1 ? marker : undefined} />
       ))}
-      {e.kind === 'join' && <circle cx={e.segs[0].p1.x} cy={e.segs[0].p1.y} r={3.5} className="join-dot" />}
+      {e.kind === 'join' && <circle cx={e.segs[0].p1.x} cy={e.segs[0].p1.y} r={2.5} className="join-dot" />}
       {e.label && (
-        <text x={mid.x} y={mid.y - 6} className="edge-label">
+        <text x={mid.x} y={mid.y - 6} className="edge-label halo">
           {e.label}
         </text>
       )}
@@ -171,24 +199,32 @@ function EdgeView({ e, frame, routerActive }: { e: VEdge; frame: Frame; routerAc
   );
 }
 
-function StepBadges({ x, y, steps }: { x: number; y: number; steps: number[] }) {
-  const label = `step ${steps.join(',')}`;
-  const w = label.length * 6.4 + 10;
+/** UML 상태도처럼 START 는 채운 원, END 는 이중 원 */
+function TerminalView({ n, frame }: { n: VNode; frame: Frame }) {
+  const active = frame.activeNodes.includes(n.id) || frame.doneNodes.includes(n.id);
+  const next = frame.nextNodes.includes(n.id);
   return (
-    <g className="step-badge" transform={`translate(${x - w + 10},${y - 9})`}>
-      <rect width={w} height={17} rx={8.5} />
-      <text x={w / 2} y={12.5}>
-        {label}
+    <g className={`terminal terminal-${n.kind} ${active ? 'active' : ''} ${next ? 'next' : ''}`}>
+      {n.kind === 'start' ? (
+        <circle cx={n.x} cy={n.y} r={7} className="t-fill" />
+      ) : (
+        <>
+          <circle cx={n.x} cy={n.y} r={9.5} className="t-ring" />
+          <circle cx={n.x} cy={n.y} r={5} className="t-fill" />
+        </>
+      )}
+      <text x={n.x} y={n.y + 26} className="t-label">
+        {n.kind === 'start' ? 'START' : 'END'}
       </text>
     </g>
   );
 }
 
 function NodeView({ n, frame, sends }: { n: VNode; frame: Frame; sends?: { arg?: StateValues }[] }) {
+  const active = frame.activeNodes.includes(n.id);
   const cls = [
     'node',
-    `node-${n.kind}`,
-    frame.activeNodes.includes(n.id) && 'active',
+    active && 'active',
     frame.doneNodes.includes(n.id) && 'done',
     frame.nextNodes.includes(n.id) && 'next',
     frame.interruptedNodes.includes(n.id) && 'interrupted',
@@ -198,48 +234,40 @@ function NodeView({ n, frame, sends }: { n: VNode; frame: Frame; sends?: { arg?:
     .filter(Boolean)
     .join(' ');
   const runs = frame.nodeRuns[n.id];
-  const pill = n.kind === 'start' || n.kind === 'end';
+  const x0 = n.x - n.w / 2;
+  const y0 = n.y - n.h / 2;
   return (
     <g className={cls}>
-      <rect
-        x={n.x - n.w / 2}
-        y={n.y - n.h / 2}
-        width={n.w}
-        height={n.h}
-        rx={pill ? n.h / 2 : 10}
-        filter={frame.activeNodes.includes(n.id) ? 'url(#glow)' : undefined}
-      />
-      <text x={n.x} y={n.y + 4.5} className="node-label">
-        {n.id.endsWith(START) ? 'START' : n.id.endsWith(END) ? 'END' : n.label}
+      {active && <rect className="node-halo" x={x0 - 4} y={y0 - 4} width={n.w + 8} height={n.h + 8} rx={8} />}
+      <rect className="node-box" x={x0} y={y0} width={n.w} height={n.h} rx={5} />
+      <text x={n.x} y={n.y + 5} className="node-label">
+        {n.label}
       </text>
       {frame.interruptedNodes.includes(n.id) && (
-        <text x={n.x + n.w / 2 - 14} y={n.y - n.h / 2 - 6} className="node-icon">
-          ⏸
+        <text x={x0 + n.w} y={y0 - 7} className="node-flag" textAnchor="end">
+          interrupt
         </text>
       )}
       {frame.errorNodes.includes(n.id) && (
-        <text x={n.x + n.w / 2 - 14} y={n.y - n.h / 2 - 6} className="node-icon err">
-          ✖
+        <text x={x0 + n.w} y={y0 - 7} className="node-flag err" textAnchor="end">
+          error
         </text>
       )}
-      {runs && !pill && <StepBadges x={n.x + n.w / 2} y={n.y - n.h / 2} steps={runs} />}
+      {runs && !frame.interruptedNodes.includes(n.id) && !frame.errorNodes.includes(n.id) && (
+        <text x={x0 + n.w} y={y0 - 7} className="step-mark" textAnchor="end">
+          s{runs.join(',')}
+        </text>
+      )}
       {sends && sends.length > 0 && (
-        <g className="send-chips">
-          <text x={n.x + n.w / 2 + 6} y={n.y + 5} className="send-count">
+        <g className="send-list">
+          <text x={x0 + n.w + 8} y={n.y + 4.5} className="send-count">
             ×{sends.length}
           </text>
-          {sends.slice(0, 5).map((s, i) => {
-            const label = pyRepr(s.arg, 24);
-            const w = Math.max(80, label.length * 6.3 + 12);
-            return (
-              <g key={i} transform={`translate(${n.x - w / 2},${n.y + n.h / 2 + 6 + i * 21})`}>
-                <rect width={w} height={18} rx={9} />
-                <text x={w / 2} y={13}>
-                  {label}
-                </text>
-              </g>
-            );
-          })}
+          {sends.slice(0, 6).map((s, i) => (
+            <text key={i} x={x0 + 2} y={y0 + n.h + 18 + i * 16} className="send-item">
+              <tspan className="send-bullet">●</tspan> {pyRepr(s.arg, 26)}
+            </text>
+          ))}
         </g>
       )}
     </g>
@@ -250,49 +278,40 @@ function RouterView({ n, frame }: { n: VNode; frame: Frame }) {
   const r = frame.router;
   const active = r?.routerId === n.id;
   const s = n.w / 2;
-  const result = active && !r!.pending ? (r!.sends.length ? `Send ×${r!.sends.length}` : `→ ${r!.result.map((x) => (x === END ? 'END' : x)).join(', ')}`) : null;
+  const result =
+    active && !r!.pending
+      ? r!.sends.length
+        ? `Send ×${r!.sends.length}`
+        : `→ ${r!.result.map((x) => (x === END ? 'END' : x)).join(', ')}`
+      : null;
   return (
     <g className={`router ${active ? 'active' : ''} ${active && r!.pending ? 'pending' : ''}`}>
-      <path
-        d={`M${n.x},${n.y - s} L${n.x + s},${n.y} L${n.x},${n.y + s} L${n.x - s},${n.y} Z`}
-        filter={active ? 'url(#glow)' : undefined}
-      />
-      <text x={n.x} y={n.y + 4} className="router-q">
-        ?
-      </text>
-      <text x={n.x} y={n.y - s - 7} className="router-label">
+      <path d={`M${n.x},${n.y - s} L${n.x + s},${n.y} L${n.x},${n.y + s} L${n.x - s},${n.y} Z`} />
+      <text x={n.x} y={n.y - s - 8} className="router-label halo">
         {n.label}()
       </text>
       {result && (
-        <g className="router-result">
-          <rect x={n.x - (result.length * 7 + 14) / 2} y={n.y + s + 6} width={result.length * 7 + 14} height={22} rx={11} />
-          <text x={n.x} y={n.y + s + 21} textAnchor="middle">
-            {result}
-          </text>
-        </g>
+        <text x={n.x} y={n.y + s + 18} className="router-result halo">
+          {result}
+        </text>
       )}
     </g>
   );
 }
 
-function HubView({
-  n,
-  values,
-  hl,
-}: {
-  n: VNode;
-  values: StateValues;
-  hl: { read: Set<string>; write: Set<string>; changed: Set<string> };
-}) {
+function HubView({ n, values, hl }: { n: VNode; values: StateValues; hl: { read: Set<string>; write: Set<string>; changed: Set<string> } }) {
   const channels = (n.channels ?? []).filter((c) => !c.hidden);
   const x0 = n.x - n.w / 2;
   const y0 = n.y - n.h / 2;
   const sub = n.id !== HUB;
   return (
     <g className={`hub ${sub ? 'hub-sub' : ''}`}>
-      <rect x={x0} y={y0} width={n.w} height={n.h} rx={10} />
-      <text x={x0 + 10} y={y0 + 17} className="hub-title">
-        {sub ? '서브그래프 State' : '공유 State (채널)'}
+      <rect className="hub-box" x={x0} y={y0} width={n.w} height={n.h} rx={6} />
+      <text x={x0 + 12} y={y0 + 18} className="hub-title">
+        {sub ? 'SUBGRAPH STATE' : 'SHARED STATE'}
+      </text>
+      <text x={x0 + n.w - 12} y={y0 + 18} className="hub-sub-title" textAnchor="end">
+        channels
       </text>
       {channels.map((c, i) => {
         const y = y0 + HUB_HEAD + i * HUB_ROW;
@@ -300,12 +319,13 @@ function HubView({
         const v = values[c.key];
         return (
           <g key={c.key} className={`hub-row ${cls}`}>
-            <rect x={x0 + 4} y={y} width={n.w - 8} height={HUB_ROW - 2} rx={4} />
-            <text x={x0 + 10} y={y + 11.5} className="hub-key">
+            <line x1={x0} x2={x0 + n.w} y1={y - 1} y2={y - 1} className="hub-rule" />
+            <rect x={x0 + 1} y={y} width={n.w - 2} height={HUB_ROW - 1} />
+            <text x={x0 + 12} y={y + 14.5} className="hub-key">
               {c.key}
             </text>
-            <text x={x0 + n.w - 10} y={y + 11.5} className="hub-val">
-              {v === undefined ? '—' : pyRepr(v, Math.max(5, Math.floor((n.w - 30 - c.key.length * 6.8) / 7.2)))}
+            <text x={x0 + n.w - 12} y={y + 14.5} className="hub-val">
+              {v === undefined ? '—' : fitWidth(pyRepr(v), Math.max(5, (n.w - 34 - c.key.length * 7.8) / 7))}
             </text>
           </g>
         );
@@ -325,7 +345,7 @@ function PacketView({ p, segs, duration }: { p: Packet; segs: Seg[]; duration: n
       const pt = pointAt(segs, e);
       if (ref.current) {
         ref.current.setAttribute('transform', `translate(${pt.x},${pt.y})`);
-        ref.current.style.opacity = t >= 1 ? '0.0' : '1';
+        ref.current.style.opacity = t >= 1 ? '0' : '1';
       }
       if (t < 1) raf = requestAnimationFrame(tick);
     };
@@ -335,21 +355,15 @@ function PacketView({ p, segs, duration }: { p: Packet; segs: Seg[]; duration: n
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const start = segs[0].p0;
-  const w = Math.min(200, p.label.length * 6.3 + 14);
   return (
     <g className={`packet packet-${p.kind}`}>
-      {segs.map((s, i) => (
-        <path key={i} d={segPath(s)} className="packet-trail" />
-      ))}
+      {(p.kind === 'read' || p.kind === 'write') && segs.map((s, i) => <path key={i} d={segPath(s)} className="packet-trail" />)}
       <g ref={ref} transform={`translate(${start.x},${start.y})`} className="packet-dot">
-        <circle r={6.5} />
+        <circle r={4.5} />
         {p.label && (
-          <g transform="translate(10,-22)">
-            <rect width={w} height={17} rx={8.5} />
-            <text x={7} y={12.5}>
-              {p.label}
-            </text>
-          </g>
+          <text x={9} y={-8} className="packet-label halo">
+            {p.label}
+          </text>
         )}
       </g>
     </g>

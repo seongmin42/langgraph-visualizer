@@ -19,6 +19,8 @@ export interface Layout {
   bends?: Record<string, number>;
   /** 서브그래프 컨테이너 (노드 id → 사각형, x/y 는 좌상단) */
   containers?: Record<string, { x: number; y: number; w: number; h: number }>;
+  /** 화면 경계를 잡을 때 추가로 포함할 점 (예: Send 인스턴스 목록이 그려질 자리) */
+  reserve?: { x: number; y: number }[];
 }
 
 export interface Built {

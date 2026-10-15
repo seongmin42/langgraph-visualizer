@@ -184,6 +184,7 @@ export const s09: Scenario = {
         [END]: { x: 905, y: 120 },
         [HUB]: { x: 250, y: 360 },
       },
+      reserve: [{ x: 580, y: 250 }],
     },
   }),
   initUi: () => ({ topic: '동물' }),

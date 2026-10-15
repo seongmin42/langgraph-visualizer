@@ -54,7 +54,7 @@ function buildCode(v: V): string {
   const unbalanced = v === 'unbalanced' || v === 'join';
   const resultsLine =
     v === 'no-reducer'
-      ? '    results: list[str]                          # ⚠ reducer 없음!'
+      ? '    results: list[str]                          # reducer 없음!'
       : '    results: Annotated[list[str], operator.add]  # 병렬 결과를 합치는 reducer';
   const web = unbalanced
     ? `#@begin search_web

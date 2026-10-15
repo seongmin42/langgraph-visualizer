@@ -93,7 +93,7 @@ def write_email(state: State):
 
 #@begin human_review
 def human_review(state: State) -> Command[Literal["send_email", "write_email"]]:
-    # ⏸ 여기서 실행이 멈춘다. resume 시에는 이 노드가 '처음부터' 다시 실행되고
+    # 여기서 실행이 멈춘다. resume 시에는 이 노드가 '처음부터' 다시 실행되고
     #    interrupt() 가 Command(resume=...) 로 받은 값을 반환한다.
 #@end
     decision = interrupt({"question": "이 초안을 보낼까요?", "draft": state["draft"]})  #@ human_review interrupt
@@ -201,7 +201,7 @@ function InterruptPanel({ session, snap, frame }: PanelProps) {
       {waiting ? (
         <div className="stack">
           <div className="callout warn">
-            <b>⏸ 실행이 멈춰 사람의 결정을 기다립니다.</b>
+            <b>실행이 멈춰 사람의 결정을 기다립니다.</b>
             <div className="mono small" style={{ marginTop: 4 }}>
               {v === 'dynamic'
                 ? `__interrupt__: Interrupt(value=${pyRepr(last.interrupt?.value, 160)})`
@@ -212,7 +212,7 @@ function InterruptPanel({ session, snap, frame }: PanelProps) {
             className="btn btn-ok"
             onClick={() => session.run(v === 'dynamic' ? rt.resume('1', { action: 'approve' }) : rt.resume('1'))}
           >
-            ✔ 승인하고 재개 {v === 'dynamic' ? '— Command(resume={"action": "approve"})' : '— invoke(None, config)'}
+            승인하고 재개 {v === 'dynamic' ? '— Command(resume={"action": "approve"})' : '— invoke(None, config)'}
           </button>
           <textarea className="text-input" rows={3} value={edited} onChange={(e) => setEdited(e.target.value)} />
           <button
@@ -229,13 +229,13 @@ function InterruptPanel({ session, snap, frame }: PanelProps) {
               )
             }
           >
-            ✎ 수정해서 보내기 {v === 'dynamic' ? '— resume={"action": "edit", ...}' : '— update_state + invoke(None)'}
+            수정해서 보내기 {v === 'dynamic' ? '— resume={"action": "edit", ...}' : '— update_state + invoke(None)'}
           </button>
           {v === 'dynamic' && (
             <>
               <input className="text-input" value={feedback} onChange={(e) => setFeedback(e.target.value)} />
               <button className="btn btn-err" onClick={() => session.run(rt.resume('1', { action: 'reject', feedback }))}>
-                ✖ 반려 — resume={'{'}"action": "reject", "feedback": ...{'}'} → write_email 로 돌아감
+                반려 — resume={'{'}"action": "reject", "feedback": ...{'}'} → write_email 로 돌아감
               </button>
             </>
           )}
@@ -248,7 +248,7 @@ function InterruptPanel({ session, snap, frame }: PanelProps) {
         </div>
       )}
       <h3>checkpoint 히스토리 (thread '1')</h3>
-      <Timeline history={frame.history} headId={frame.checkpointId} emptyText="▶ 재생으로 시작하세요." />
+      <Timeline history={frame.history} headId={frame.checkpointId} emptyText="재생으로 시작하세요." />
     </section>
   );
 }
@@ -263,7 +263,7 @@ export const s08: Scenario = {
     '두 가지 방식이 있습니다: ① 노드 안에서 interrupt(value) 를 호출하고 Command(resume=...) 로 재개하는 동적 방식(권장), ② compile(interrupt_before=[...]) 로 특정 노드 직전에 멈추는 정적 breakpoint.',
   ],
   watch: [
-    '주황색으로 멈춘 노드와 ⏸ 아이콘, 오른쪽 승인/수정/반려 버튼',
+    '형광펜으로 표시되며 멈춘 노드와, 오른쪽에 나타나는 승인/수정/반려 버튼',
     '동적 방식: 재개 시 human_review 가 "처음부터" 다시 실행되고 interrupt() 가 resume 값을 반환',
     '반려하면 Command(goto="write_email") 로 되돌아가 다시 검토를 요청',
   ],

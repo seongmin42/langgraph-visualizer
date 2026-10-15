@@ -111,7 +111,7 @@ export class Runtime {
     this.pendingPatch = { ...(this.pendingPatch ?? {}), ...patch };
   }
 
-  idleFrame(threadId: string | null = null, title = '▶ 재생 버튼을 누르면 graph.invoke()가 실행됩니다'): Frame {
+  idleFrame(threadId: string | null = null, title = '재생(Space)을 누르면 graph.invoke()가 실행됩니다'): Frame {
     const cp = threadId !== null ? this.latest(threadId) : undefined;
     this.view = {
       threadId,
@@ -521,7 +521,7 @@ export class Runtime {
             yield this.frame({
               phase: 'route-pending',
               title: `router '${ce.routerName}' 가 state 를 읽고 다음 노드를 고르려 합니다`,
-              detail: `지금 state 의 ${keysText(ce.reads)} 값을 바꾸면 다른 경로로 갈 수 있습니다. 값을 수정한 뒤 ▶ 를 눌러 보세요.`,
+              detail: `지금 state 의 ${keysText(ce.reads)} 값을 바꾸면 다른 경로로 갈 수 있습니다. 값을 수정한 뒤 다음 스텝으로 진행해 보세요.`,
               router: this.routerInfo(ce, routeValues, true),
               activeNodes: [],
               editable: this.opts.editableKeys ?? ce.reads,

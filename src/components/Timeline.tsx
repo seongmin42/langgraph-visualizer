@@ -35,7 +35,7 @@ export function Timeline({ history, headId, selectedId, onSelect, emptyText }: P
             <div key={`${cur.id}-forks`} className="tl-forks">
               {kids.map((k, i) => (
                 <div key={k.id} className={`tl-branch ${i > 0 ? 'tl-branch-fork' : ''}`}>
-                  <div className="tl-branch-label">{i === 0 ? '원래 분기' : `fork #${i}`}</div>
+                  <div className="tl-branch-label">{i === 0 ? '원래 분기' : `fork ${i}`}</div>
                   {renderChain(k, depth + 1, i)}
                 </div>
               ))}
@@ -92,9 +92,9 @@ function Row({
         {writers.length ? writers.map((w) => (w === '__start__' ? 'START' : w)).join(', ') : '—'}
       </span>
       <span className="tl-next mono">
-        {interrupted ? '⏸ ' : ''}next: {cp.next.length ? cp.next.map((t) => t.node).join(', ') : '()'}
+        {interrupted && <span className="tl-paused">paused</span>}next: {cp.next.length ? cp.next.map((t) => t.node).join(', ') : '()'}
       </span>
-      {head && <span className="tl-head">현재</span>}
+      {head && <span className="tl-head">HEAD</span>}
     </button>
   );
 }

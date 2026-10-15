@@ -131,11 +131,11 @@ function SubgraphPanel({ frame }: PanelProps) {
         </thead>
         <tbody>
           {[
-            ['question', '✔', '✔ (입력으로 전달)'],
-            ['findings', '✔', '✔ (결과로 반환)'],
-            ['queries', '—', '✔ 전용'],
-            ['docs', '—', '✔ 전용'],
-            ['report', '✔', '—'],
+            ['question', '있음', '있음 · 입력으로 전달'],
+            ['findings', '있음', '있음 · 결과로 반환'],
+            ['queries', '—', '전용'],
+            ['docs', '—', '전용'],
+            ['report', '있음', '—'],
           ].map(([k, p, s]) => (
             <tr key={k} className={frame.sub?.changedKeys.includes(k) || frame.changedKeys.includes(k) ? 'current' : ''}>
               <td className="mono">{k}</td>

@@ -117,9 +117,9 @@ function TimeTravelPanel({ session, frame, snap }: PanelProps) {
         selectedId={selected}
         onSelect={(c) => {
           setSelected(c.id);
-          session.player.push(rt.inspect(c.id, `⏪ checkpoint #${c.seq} (step ${c.step}) 로 시간 여행 — 이 시점의 state 복원`));
+          session.player.push(rt.inspect(c.id, `checkpoint #${c.seq} (step ${c.step}) 로 시간 여행 — 이 시점의 state 복원`));
         }}
-        emptyText="먼저 ▶ 재생으로 그래프를 한 번 실행하세요."
+        emptyText="먼저 재생해서 그래프를 한 번 실행하세요."
       />
 
       {cp ? (
@@ -138,7 +138,7 @@ function TimeTravelPanel({ session, frame, snap }: PanelProps) {
             disabled={snap.running || cp.next.length === 0}
             onClick={() => session.run(rt.replay(cp.id))}
           >
-            ▶ 여기서 그대로 다시 실행 (replay)
+            여기서 그대로 다시 실행 (replay)
           </button>
           <div className="row">
             <span className="mono small">topic =</span>
@@ -149,14 +149,14 @@ function TimeTravelPanel({ session, frame, snap }: PanelProps) {
             disabled={snap.running || cp.next.length === 0}
             onClick={() => session.run(rt.fork(cp.id, { topic }))}
           >
-            ✎ update_state 로 topic 수정 후 fork
+            update_state 로 topic 수정 후 fork
           </button>
           {cp.next.length === 0 && <div className="muted small">마지막 checkpoint 는 next 가 비어 있어 이어서 실행할 노드가 없습니다.</div>}
         </div>
       ) : (
         <div className="callout info" style={{ marginTop: 10 }}>
           {history.length === 0 ? (
-            <>▶ 재생으로 먼저 실행하면 super-step 마다 checkpoint 가 쌓입니다.</>
+            <>먼저 재생하면 super-step 마다 checkpoint 가 쌓입니다.</>
           ) : (
             <>
               추천: <b>#{suggested?.seq ?? '?'} (next: write_draft)</b> 를 선택한 뒤 ① replay 로 다시 생성해 보고, ② topic 을 바꿔 fork 해

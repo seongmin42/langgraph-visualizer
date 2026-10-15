@@ -195,7 +195,7 @@ export const s06: Scenario = {
     },
   }),
   initUi: () => ({ threads: ['alice', 'bob'], thread: 'alice', text: PRESETS[0] }),
-  initialFrame: (s) => s.runtime.idleFrame('alice', '▶ 재생 또는 오른쪽 invoke 버튼으로 thread "alice" 에 메시지를 보내세요'),
+  initialFrame: (s) => s.runtime.idleFrame('alice', '재생하거나 오른쪽 invoke 버튼으로 thread "alice" 에 메시지를 보내세요'),
   defaultRun: (s) => invokeOn(s, (s.ui.thread as string) ?? 'alice', (s.ui.text as string) ?? PRESETS[0]),
   Panel: ThreadPanel,
 };

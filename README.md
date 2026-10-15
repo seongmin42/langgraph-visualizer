@@ -5,7 +5,18 @@ LangGraph 의 핵심 실행 모델을 **실제 LLM 호출 없이 mock 노드로*
 - 왼쪽: 그래프 (노드 / 엣지 / router / 공유 State 허브, 데이터 패킷 애니메이션)
 - 오른쪽: 현재 State 패널 (바뀐 키 하이라이트, 이전 값 → 새 값 diff, 대기 중인 writes) + 시나리오별 실험 패널
 - 아래: 해당 시나리오의 LangGraph 파이썬 코드 (지금 실행 중인 부분 하이라이트) + 실행 로그
-- 모든 시나리오: ▶ 재생 / ⏸ 일시정지 / ▶| 한 스텝 / ◀ 이전 스텝 / 속도 조절 / ⟲ 초기화
+- 아래 재생 바: 재생 / 일시정지 / 한 스텝 / 이전 스텝 / 속도 / 초기화, 그리고 super-step 눈금이 있는 스크러버(드래그로 이동)
+- 라이트/다크 테마 (시스템 설정을 따르고, 사이드바 아래에서 전환)
+
+### 디자인 원칙
+
+"인쇄된 기술 노트" 콘셉트로, 흔한 AI 생성 UI의 특징(네온 글로우, 보라/파랑 그라데이션, 카드 속 카드, 한쪽 색 줄 테두리, 이모지, 알약 배지 남발)을 피했습니다.
+
+- 종이색 바탕 + 잉크색 글자 + 헤어라인 구분선. 카드와 그림자는 최소화
+- 강조색은 하나(버밀리언)만 쓰고, "지금 실행 중"인 것에만 사용
+- 바뀐 값은 형광펜, 값의 변화는 git diff 처럼 `−` / `+` 줄로 표시
+- 그래프는 도식 스타일: START 는 채운 원, END 는 이중 원(UML 상태도), router 는 마름모
+- Pretendard(본문) + IBM Plex Mono(코드·라벨·숫자)
 
 ## 실행
 
@@ -19,7 +30,7 @@ npm test         # 엔진 동작 테스트 (vitest)
 npm run build    # dist/ 에 정적 빌드 (base: './' 라서 GitHub Pages 등 어디에 올려도 동작)
 ```
 
-단축키: `Space` 재생/일시정지, `→` 한 스텝, `←` 이전 스텝. 실행 로그의 항목을 클릭하면 그 시점으로 이동합니다.
+단축키: `Space` 재생/일시정지, `→` 한 스텝, `←` 이전 스텝. 스크러버를 드래그하거나 실행 로그 항목을 클릭하면 그 시점으로 이동합니다.
 URL 해시(`#/parallel/join` 등)로 시나리오와 변형을 바로 열 수 있습니다.
 
 ## 시나리오
@@ -48,7 +59,7 @@ src/
     types.ts      #   GraphSpec, Checkpoint, Frame, Send, Command ...
   player.ts       # Frame 버퍼 + 재생/일시정지/스텝/되감기
   geometry.ts     # 노드 배치 → SVG 엣지/패킷 경로 계산
-  components/     # GraphView, StatePanel, CodePanel, Timeline, EventLog ...
+  components/     # GraphView, StatePanel, CodePanel, Transport(스크러버), Timeline, EventLog ...
   scenarios/      # 시나리오 하나 = 그래프 정의 + 레이아웃 + 파이썬 코드 + (선택) 실험 패널
 ```
 

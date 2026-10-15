@@ -24,7 +24,7 @@ const graph: GraphSpec = {
   ],
   nodes: [
     { id: 'classify', reads: ['text'], fn: (s) => ({ score: mockSentiment(String(s.text)) }) },
-    { id: 'thank', reads: ['text'], fn: () => ({ reply: '칭찬 감사합니다! 쿠폰을 보내드릴게요 🎁' }) },
+    { id: 'thank', reads: ['text'], fn: () => ({ reply: '칭찬 감사합니다! 쿠폰을 보내드릴게요.' }) },
     { id: 'ask_more', reads: ['text'], fn: () => ({ reply: '조금 더 자세히 알려주실 수 있을까요?' }) },
     { id: 'apologize', reads: ['text'], fn: () => ({ reply: '불편을 드려 죄송합니다. 상담원을 연결해 드릴게요.' }) },
   ],
@@ -82,7 +82,7 @@ def route_by_score(state: State) -> Literal["positive", "negative", "neutral"]:
 
 #@begin thank
 def thank(state: State):
-    return {"reply": "칭찬 감사합니다! 쿠폰을 보내드릴게요 🎁"}
+    return {"reply": "칭찬 감사합니다! 쿠폰을 보내드릴게요."}
 #@end
 
 #@begin ask_more
@@ -173,8 +173,8 @@ function RouterLab({ session, frame, snap }: PanelProps) {
       <div className={`callout ${pending ? 'warn' : 'info'}`} style={{ marginTop: 8 }}>
         {pending ? (
           <>
-            <b>⏸ router 직전에서 멈췄습니다.</b> 위 State 패널의 <b>score</b> 슬라이더로 값을 바꾸고 "적용"을 누르면, router
-            가 바뀐 값으로 다른 경로를 고릅니다. 그대로 ▶ 를 누르면 원래 값으로 진행합니다.
+            <b>router 직전에서 멈췄습니다.</b> 위 State 패널의 <b>score</b> 슬라이더로 값을 바꾸고 "적용"을 누르면, router
+            가 바뀐 값으로 다른 경로를 고릅니다. 그대로 다음 스텝으로 가면 원래 값으로 진행합니다.
           </>
         ) : (
           <>실행하면 router 가 판단하기 직전에 자동으로 멈춥니다. 그때 state 의 score 를 직접 바꿔 다른 경로를 실험할 수 있어요.</>

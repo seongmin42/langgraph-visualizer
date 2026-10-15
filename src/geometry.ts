@@ -36,12 +36,12 @@ export interface VEdge {
   segs: Seg[];
 }
 
-export const HUB_ROW = 17;
-export const HUB_HEAD = 26;
+export const HUB_ROW = 21;
+export const HUB_HEAD = 30;
 
 export function hubSize(channels: ChannelSpec[]) {
   const visible = channels.filter((c) => !c.hidden);
-  return { w: 200, h: HUB_HEAD + visible.length * HUB_ROW + 8 };
+  return { w: 240, h: HUB_HEAD + visible.length * HUB_ROW + 6 };
 }
 
 export function buildScene(graph: GraphSpec, layout: Layout, prefix = ''): { nodes: VNode[]; edges: VEdge[] } {
@@ -59,8 +59,8 @@ export function buildScene(graph: GraphSpec, layout: Layout, prefix = ''): { nod
     nodes.push({ id: P(id), label, kind, x: p.x, y: p.y, w: p.w ?? w, h: p.h ?? h, ...extra });
   };
 
-  add(START, 'START', 'start', 74, 30);
-  if (layout.nodes[P(END)]) add(END, 'END', 'end', 74, 30);
+  add(START, 'START', 'start', 18, 18);
+  if (layout.nodes[P(END)]) add(END, 'END', 'end', 22, 22);
   const hub = hubSize(graph.channels);
   add(HUB, 'State', 'hub', hub.w, hub.h, { channels: graph.channels });
 
@@ -73,12 +73,12 @@ export function buildScene(graph: GraphSpec, layout: Layout, prefix = ''): { nod
       nodes.push(...inner.nodes);
       edges.push(...inner.edges);
     } else {
-      add(n.id, n.id, 'node', Math.max(112, n.id.length * 8.6 + 34), 42);
+      add(n.id, n.id, 'node', Math.max(108, n.id.length * 8.6 + 34), 40);
     }
   }
   for (const ce of graph.conditionalEdges ?? []) {
     const rid = routerId(ce.routerName);
-    if (!nodes.some((v) => v.id === P(rid))) add(rid, ce.routerName, 'router', 30, 30);
+    if (!nodes.some((v) => v.id === P(rid))) add(rid, ce.routerName, 'router', 26, 26);
   }
 
   const find = (id: string) => nodes.find((v) => v.id === P(id))!;
