@@ -1,5 +1,5 @@
 import { REDUCER_LABEL } from '../components/StatePanel';
-import { DiffView, ValueView } from '../components/ValueView';
+import { TreeRow, VarNode } from '../components/ValueView';
 import { ai, human, system } from '../engine/messages';
 import { pyRepr } from '../engine/pyrepr';
 import { END, HUB, START, type ChannelSpec, type Frame, type GraphSpec } from '../engine/types';
@@ -83,39 +83,34 @@ const NOTES: Record<string, string> = {
 
 export function CompareView({ frame, channels }: { frame: Frame; channels: ChannelSpec[] }) {
   return (
-    <section className="panel">
-      <header className="panel-head">
-        <h2>State — reducer 비교</h2>
-        <span className="muted small">같은 update 를 세 필드에 반환</span>
-      </header>
+    <div className="vars">
       {frame.pendingWrites.length > 0 && (
-        <div className="pending">
-          <div className="pending-head">대기 중인 writes (세 필드에 같은 값)</div>
+        <>
+          <TreeRow depth={0} name={<span className="scope">Pending writes</span>} hint="세 필드에 같은 값" />
           {frame.pendingWrites.map((w) => (
-            <div key={w.taskId} className="pending-row mono">
-              <b>{w.node}</b> → {pyRepr(Object.values(w.update)[0], 80)}
-            </div>
+            <TreeRow key={w.taskId} depth={1} name={w.node} value={<span className="v-value">{pyRepr(Object.values(w.update)[0], 70)}</span>} />
           ))}
-        </div>
+        </>
       )}
-      <div className="compare">
-        {channels.map((ch) => {
-          const d = frame.diff.find((x) => x.key === ch.key);
-          const changed = frame.changedKeys.includes(ch.key);
-          return (
-            <div key={ch.key} className={`compare-col ${changed ? 'changed' : ''}`}>
-              <h4>{ch.key}</h4>
-              <span className={`reducer reducer-${ch.reducer}`}>{REDUCER_LABEL[ch.reducer]}</span>
-              <div className="compare-note">{NOTES[ch.key]}</div>
-              {changed && d ? <DiffView d={d} /> : <ValueView v={frame.state[ch.key]} />}
-              <div className="muted small" style={{ marginTop: 4 }}>
-                len = {Array.isArray(frame.state[ch.key]) ? (frame.state[ch.key] as unknown[]).length : 0}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
+      {channels.map((ch) => {
+        const changed = frame.changedKeys.includes(ch.key);
+        const d = frame.diff.find((x) => x.key === ch.key);
+        return (
+          <div key={ch.key} className="compare-group">
+            <VarNode
+              depth={0}
+              name={ch.key}
+              value={frame.state[ch.key]}
+              diff={changed ? d : undefined}
+              mark={changed ? 'changed' : undefined}
+              hint={REDUCER_LABEL[ch.reducer]}
+              title={`${ch.key}: ${ch.pyType}`}
+            />
+            <div className="tree-note">{NOTES[ch.key]}</div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

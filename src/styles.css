@@ -1,73 +1,149 @@
 /*
- * 디자인 콘셉트: "인쇄된 기술 노트"
- *  - 종이 같은 따뜻한 오프화이트 바탕, 잉크색 글자, 헤어라인 구분선 (카드/그림자 최소화)
- *  - 강조색은 하나(버밀리언) — "지금 실행 중"에만 쓴다
- *  - 바뀐 값은 형광펜 표시, diff 는 git 처럼 - / +
- *  - UI 는 Pretendard, 코드·라벨·숫자는 IBM Plex Mono
+ * 레퍼런스
+ *  - 작업대(workbench): VS Code "Light Modern" / "Dark Modern" 테마 토큰과 디버거 색
+ *    (microsoft/vscode: extensions/theme-defaults/themes/*_modern.json,
+ *     src/vs/workbench/contrib/debug/browser/debugColors.ts, callStackEditorContribution.ts)
+ *  - 그래프: LangGraph draw_mermaid() 의 NodeStyles 와 Mermaid default 테마
+ *    (langchain_core/runnables/graph.py: fill:#f2f0ff / fill-opacity:0 / fill:#bfb6fc,
+ *     mermaid theme-default: nodeBorder #9370DB, lineColor #333, cluster #ffffde / #aaaa33)
+ *  - 코드 하이라이트: Shiki + VS Code Light+/Dark+ (TextMate 문법)
  */
 
 :root,
 :root[data-theme='light'] {
-  --bg: #f3f1eb;
-  --paper: #faf9f5;
-  --surface: #ffffff;
-  --line: #e2dfd6;
-  --line-2: #cfcbbf;
-  --ink: #1b1a17;
-  --ink-2: #4f4d47;
-  --ink-3: #87847a;
-  --ink-4: #b4b0a5;
-  --accent: #d4461c;
-  --accent-soft: rgba(212, 70, 28, 0.09);
-  --accent-line: rgba(212, 70, 28, 0.45);
-  --read: #2f5bbf;
-  --read-soft: rgba(47, 91, 191, 0.1);
-  --send: #0d7c79;
-  --add: #24704a;
-  --add-soft: rgba(36, 112, 74, 0.09);
-  --del: #b3261e;
-  --del-soft: rgba(179, 38, 30, 0.07);
-  --mark: rgba(255, 214, 51, 0.55);
-  --mark-strong: #f2c200;
-  --code-kw: #8b3d8c;
-  --code-str: #2c6e3f;
-  --code-num: #b35c00;
-  --code-def: #1b1a17;
-  --code-cls: #8a5a00;
-  --code-call: #2f5bbf;
-  --code-com: #9a968b;
+  --bg: #ffffff;
+  --side: #f8f8f8;
+  --border: #e5e5e5;
+  --fg: #3b3b3b;
+  --fg-strong: #1f1f1f;
+  --desc: #3b3b3b;
+  --muted: #6e7681;
+  --focus: #005fb8;
+  --button: #005fb8;
+  --button-hover: #0258a8;
+  --button2: #e5e5e5;
+  --button2-fg: #3b3b3b;
+  --button2-hover: #cccccc;
+  --input-bg: #ffffff;
+  --input-border: #cecece;
+  --list-hover: #f2f2f2;
+  --list-active: #e8e8e8;
+  --tab-inactive-fg: #616161;
+  --badge: #cccccc;
+  --badge-fg: #3b3b3b;
+  --status-debug: #fd716c;
+  --status-debug-fg: #000000;
+  --link: #005fb8;
+  --toolbar: #f3f3f3;
+  --shadow: rgba(0, 0, 0, 0.16);
+  --hover-bg: #f8f8f8;
+  --hover-border: #c8c8c8;
+  --line-no: #6e7681;
+  --line-no-active: #171184;
+
+  /* 디버거 */
+  --stackframe: #ffff6673;
+  --stackframe-solid: #ffffa6;
+  --frame-arrow: #be8700;
+  --breakpoint: #e51400;
+  --dbg-continue: #007acc;
+  --dbg-restart: #388a34;
+  --var-name: #9b46b0;
+  --var-value: #6c6c6ccc;
+  --var-string: #a31515;
+  --var-number: #098658;
+  --var-boolean: #0000ff;
+  --var-type: #4a90e2;
+  --value-changed: rgba(86, 156, 214, 0.28);
+  --inserted: #9ccc2c66;
+  --removed: #ff000033;
+  --state-label: #88888844;
+  --exception-bg: #a31515;
+  --exception-fg: #ffffff;
+
+  /* Mermaid / LangGraph 그래프 */
+  --mm-bg: #ffffff;
+  --mm-node: #f2f0ff;
+  --mm-node-border: #9370db;
+  --mm-end: #bfb6fc;
+  --mm-line: #333333;
+  --mm-text: #333333;
+  --mm-label-bg: rgba(232, 232, 232, 0.8);
+  --mm-cluster: #ffffde;
+  --mm-cluster-border: #aaaa33;
+  --mm-class: #ececff;
+  --pk-read: #007acc;
+  --pk-write: #be8700;
+  --pk-trigger: #333333;
+  --pk-send: #9370db;
   color-scheme: light;
 }
 
 :root[data-theme='dark'] {
-  --bg: #121211;
-  --paper: #181816;
-  --surface: #1e1e1b;
-  --line: #2b2a27;
-  --line-2: #3b3a35;
-  --ink: #ebe8df;
-  --ink-2: #b1ada2;
-  --ink-3: #7d7a70;
-  --ink-4: #56544d;
-  --accent: #ff6a3d;
-  --accent-soft: rgba(255, 106, 61, 0.12);
-  --accent-line: rgba(255, 106, 61, 0.5);
-  --read: #86a7ff;
-  --read-soft: rgba(134, 167, 255, 0.13);
-  --send: #45c4bf;
-  --add: #6cc08e;
-  --add-soft: rgba(108, 192, 142, 0.1);
-  --del: #f08a7e;
-  --del-soft: rgba(240, 138, 126, 0.08);
-  --mark: rgba(255, 214, 51, 0.2);
-  --mark-strong: #e8c33a;
-  --code-kw: #d49be0;
-  --code-str: #9fd1a2;
-  --code-num: #f0b073;
-  --code-def: #ebe8df;
-  --code-cls: #e7c37a;
-  --code-call: #9db6ff;
-  --code-com: #6f6c63;
+  --bg: #1f1f1f;
+  --side: #181818;
+  --border: #2b2b2b;
+  --fg: #cccccc;
+  --fg-strong: #ffffff;
+  --desc: #9d9d9d;
+  --muted: #9d9d9d;
+  --focus: #0078d4;
+  --button: #0078d4;
+  --button-hover: #026ec1;
+  --button2: #313131;
+  --button2-fg: #cccccc;
+  --button2-hover: #3c3c3c;
+  --input-bg: #313131;
+  --input-border: #3c3c3c;
+  --list-hover: #2a2d2e;
+  --list-active: #37373d;
+  --tab-inactive-fg: #9d9d9d;
+  --badge: #616161;
+  --badge-fg: #f8f8f8;
+  --status-debug: #0078d4;
+  --status-debug-fg: #ffffff;
+  --link: #4daafc;
+  --toolbar: #333333;
+  --shadow: rgba(0, 0, 0, 0.36);
+  --hover-bg: #202020;
+  --hover-border: #454545;
+  --line-no: #6e7681;
+  --line-no-active: #cccccc;
+
+  --stackframe: #ffff0033;
+  --stackframe-solid: #4b4b1f;
+  --frame-arrow: #ffcc00;
+  --breakpoint: #e51400;
+  --dbg-continue: #75beff;
+  --dbg-restart: #89d185;
+  --var-name: #c586c0;
+  --var-value: #cccccc99;
+  --var-string: #ce9178;
+  --var-number: #b5cea8;
+  --var-boolean: #4e94ce;
+  --var-type: #4a90e2;
+  --value-changed: rgba(86, 156, 214, 0.32);
+  --inserted: #9ccc2c33;
+  --removed: #ff000033;
+  --state-label: #88888844;
+  --exception-bg: #6c2022;
+  --exception-fg: #cccccc;
+
+  /* Mermaid dark 테마 쪽 값에 맞춘 그래프 */
+  --mm-bg: #1f1f1f;
+  --mm-node: #2c2742;
+  --mm-node-border: #9370db;
+  --mm-end: #4b3f8f;
+  --mm-line: #c8c8c8;
+  --mm-text: #e0e0e0;
+  --mm-label-bg: rgba(80, 80, 80, 0.8);
+  --mm-cluster: #2d2d1f;
+  --mm-cluster-border: #8a8a3a;
+  --mm-class: #2c2742;
+  --pk-read: #75beff;
+  --pk-write: #ffcc00;
+  --pk-trigger: #e0e0e0;
+  --pk-send: #b4a0ff;
   color-scheme: dark;
 }
 
@@ -82,272 +158,308 @@ body,
 }
 body {
   background: var(--bg);
-  color: var(--ink);
-  font-family: 'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', system-ui, sans-serif;
-  font-size: 13.5px;
-  line-height: 1.55;
-  letter-spacing: -0.005em;
-  -webkit-font-smoothing: antialiased;
-  font-feature-settings: 'tnum' 1;
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Pretendard Variable', system-ui, Ubuntu, 'Droid Sans', sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  overflow: hidden;
 }
-button {
+button,
+select,
+input,
+textarea {
   font: inherit;
   color: inherit;
 }
 :focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: 1px solid var(--focus);
+  outline-offset: -1px;
 }
 .mono,
-code,
 pre,
-kbd {
-  font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
-}
-.mono {
-  font-size: 12px;
-}
-.muted {
-  color: var(--ink-3);
-}
-.small {
-  font-size: 12px;
-}
-.eyebrow {
-  font-family: 'IBM Plex Mono', 'Pretendard Variable', monospace;
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--ink-3);
+code,
+.code,
+.v-val,
+.v-hint,
+.launch-input {
+  font-family: 'SF Mono', Menlo, Monaco, Consolas, 'Droid Sans Mono', 'Liberation Mono', 'D2Coding', 'Pretendard Variable', monospace;
 }
 
-/* ───────── 레이아웃 ───────── */
-.app {
+/* ───────── 작업대 배치 ───────── */
+.workbench {
   display: grid;
-  grid-template-columns: 228px minmax(0, 1fr) var(--insp-w, 384px);
-  grid-template-rows: minmax(0, 1fr) auto;
-  grid-template-areas: 'side stage insp' 'trans trans trans';
+  grid-template-columns: 48px 256px minmax(0, 1fr) 340px;
+  grid-template-rows: minmax(0, 1fr) 22px;
+  grid-template-areas: 'ab ex ed dbg' 'sb sb sb sb';
   height: 100vh;
 }
-.app.wide-inspector {
-  --insp-w: 540px;
+.workbench.no-explorer {
+  grid-template-columns: 48px 0 minmax(0, 1fr) 340px;
 }
-.sidebar {
-  grid-area: side;
+.activitybar {
+  grid-area: ab;
+  background: var(--side);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--line);
+  align-items: center;
+}
+.ab-item {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.ab-item .codicon {
+  font-size: 24px;
+}
+.ab-item:hover,
+.ab-item.on {
+  color: var(--fg-strong);
+}
+.ab-item.on {
+  border-left-color: var(--focus);
+}
+.ab-spacer {
+  flex: 1;
+}
+
+.sidebar {
+  background: var(--side);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.explorer {
+  grid-area: ex;
+  border-right: 1px solid var(--border);
+}
+.debug {
+  grid-area: dbg;
+  border-left: 1px solid var(--border);
+}
+.sidebar-title {
+  height: 35px;
+  flex: 0 0 35px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px 0 20px;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--fg);
+  gap: 8px;
+}
+.sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
   min-height: 0;
 }
-.stage {
-  grid-area: stage;
+
+.pane {
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.explorer .pane:first-of-type {
+  border-top: none;
+}
+.pane.grow.open {
+  flex: 1 1 auto;
+}
+.pane-header {
+  height: 22px;
+  flex: 0 0 22px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-left: 2px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  user-select: none;
+}
+.pane-header .codicon {
+  font-size: 16px;
+}
+.pane-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pane-actions {
+  margin-left: auto;
+}
+.pane-body {
+  overflow-y: auto;
+  min-height: 0;
+  padding-bottom: 6px;
+}
+.pane.grow .pane-body {
+  flex: 1;
+}
+
+/* 트리 (탐색기 / 변수 / 호출 스택 공통) */
+.tree-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 22px;
+  padding-right: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--fg);
+  line-height: 22px;
+}
+.tree-row.expandable,
+button.tree-row {
+  cursor: pointer;
+}
+.tree-row:hover {
+  background: var(--list-hover);
+}
+.tree-row.selected {
+  background: var(--list-active);
+  color: var(--fg-strong);
+  outline: 1px solid var(--focus);
+  outline-offset: -1px;
+}
+.twistie {
+  width: 16px;
+  flex: 0 0 16px;
+  display: grid;
+  place-items: center;
+}
+.twistie .codicon {
+  font-size: 14px;
+}
+.folder {
+  font-size: 13px;
+}
+.file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.file-desc {
+  color: var(--muted);
+  font-size: 12px;
+  margin-left: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* VS Code Seti 아이콘 테마의 파이썬 파일 색 */
+.py-icon {
+  color: #519aba;
+  font-size: 16px;
+  flex: 0 0 16px;
+}
+.readme {
+  padding: 4px 20px 10px;
+  font-size: 13px;
+  white-space: normal;
+}
+.readme h3 {
+  font-size: 13px;
+  margin: 4px 0 6px;
+  color: var(--fg-strong);
+}
+.readme h4 {
+  font-size: 12px;
+  margin: 10px 0 4px;
+  color: var(--fg-strong);
+}
+.readme p {
+  margin: 0 0 6px;
+  line-height: 1.5;
+}
+.readme ul {
+  margin: 0;
+  padding-left: 16px;
+  line-height: 1.5;
+}
+
+/* ───────── 에디터 영역 ───────── */
+.editor-area {
+  grid-area: ed;
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: var(--paper);
-}
-.inspector {
-  grid-area: insp;
-  border-left: 1px solid var(--line);
-  overflow-y: auto;
-  min-height: 0;
-}
-
-/* ───────── 사이드바 ───────── */
-.wordmark {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 18px 18px 14px;
-  font-weight: 650;
-  font-size: 14px;
-  letter-spacing: -0.02em;
-}
-.wm-light {
-  font-weight: 400;
-  color: var(--ink-3);
-}
-.wm-dot {
-  fill: var(--ink);
-}
-.wm-ring {
-  fill: none;
-  stroke: var(--ink);
-  stroke-width: 1.4;
-}
-.wm-line {
-  stroke: var(--accent);
-  stroke-width: 1.4;
-  fill: none;
-}
-.chapters {
-  flex: 1;
-  overflow-y: auto;
-  padding: 4px 10px 12px;
-}
-.chapter-group {
-  margin-top: 14px;
-}
-.chapter-group > .eyebrow {
-  padding: 0 8px 6px;
-}
-.chapter {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  gap: 4px;
-  width: 100%;
-  text-align: left;
-  background: none;
-  border: none;
-  border-radius: 5px;
-  padding: 5px 8px;
-  cursor: pointer;
-  color: var(--ink-2);
-  line-height: 1.4;
-}
-.chapter:hover {
-  background: var(--line);
-  color: var(--ink);
-}
-.chapter.on {
-  background: var(--surface);
-  color: var(--ink);
-  box-shadow: 0 0 0 1px var(--line);
-}
-.chapter-num {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  color: var(--ink-4);
-  padding-top: 1.5px;
-}
-.chapter.on .chapter-num {
-  color: var(--accent);
-}
-.chapter-title {
-  font-size: 13px;
-}
-.sidebar-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-top: 1px solid var(--line);
-}
-.keys {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  font-size: 11.5px;
-  color: var(--ink-3);
-}
-kbd {
-  display: inline-block;
-  min-width: 18px;
-  padding: 0 4px;
-  margin-right: 3px;
-  font-size: 10.5px;
-  text-align: center;
-  border: 1px solid var(--line-2);
-  border-bottom-width: 2px;
-  border-radius: 4px;
-  background: var(--surface);
-  color: var(--ink-2);
-}
-
-/* ───────── 챕터 헤더 ───────── */
-.chapter-head {
-  padding: 18px 28px 0;
-  border-bottom: 1px solid var(--line);
   background: var(--bg);
 }
-.chapter-head h1 {
-  margin: 4px 0 6px;
-  font-size: 22px;
-  font-weight: 650;
-  letter-spacing: -0.025em;
-  line-height: 1.25;
-}
-.lede {
-  margin: 0 0 12px;
-  max-width: 78ch;
-  color: var(--ink-2);
-}
-.link {
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--ink);
-  text-decoration: underline;
-  text-decoration-color: var(--ink-4);
-  text-underline-offset: 3px;
-  cursor: pointer;
-  font-size: 12.5px;
-}
-.link:hover {
-  text-decoration-color: var(--ink);
-}
-.more {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-  gap: 28px;
-  max-width: 1000px;
-  margin-bottom: 14px;
-}
-.more p {
-  margin: 0;
-  color: var(--ink-2);
-}
-.watch ol {
-  margin: 6px 0 0;
-  padding-left: 18px;
-  color: var(--ink-2);
-}
-.watch li {
-  margin: 2px 0;
-}
-.watch li::marker {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  color: var(--ink-3);
-}
-.variant-tabs {
+.editor-group {
+  flex: 1 1 auto;
+  min-height: 200px;
   display: flex;
-  align-items: flex-end;
-  gap: 20px;
-  flex-wrap: wrap;
+  flex-direction: column;
 }
-.variant-tabs button {
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  padding: 6px 0 8px;
-  cursor: pointer;
-  color: var(--ink-3);
+.tabs {
+  display: flex;
+  height: 35px;
+  flex: 0 0 35px;
+  background: var(--side);
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px 0 10px;
   font-size: 13px;
+  border-right: 1px solid var(--border);
+  color: var(--tab-inactive-fg);
+}
+.tab.active {
+  background: var(--bg);
+  color: var(--fg);
+  box-shadow: inset 0 1px 0 var(--focus);
   margin-bottom: -1px;
 }
-.variant-tabs button:hover {
-  color: var(--ink);
+.tab .codicon {
+  color: var(--mm-node-border);
 }
-.variant-tabs button.on {
-  color: var(--ink);
-  border-bottom-color: var(--ink);
-  font-weight: 600;
+.tab-label {
+  font-style: italic;
 }
-.variant-desc {
-  margin-left: auto;
-  padding-bottom: 9px;
-  font-size: 12px;
-  color: var(--ink-3);
+.breadcrumbs {
+  height: 22px;
+  flex: 0 0 22px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
 }
-
-/* ───────── 캔버스 ───────── */
-.canvas {
+.breadcrumbs .codicon {
+  font-size: 14px;
+}
+.graph-canvas {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--mm-bg);
+}
+.graph-stage {
   position: relative;
-  flex: 1 1 auto;
-  min-height: 220px;
+  flex: 1;
+  min-height: 0;
 }
 .graph-svg {
   position: absolute;
@@ -355,322 +467,264 @@ kbd {
   width: 100%;
   height: 100%;
 }
-.hud {
+
+/* 떠 있는 디버그 툴바 */
+.debug-toolbar {
   position: absolute;
-  top: 14px;
-  left: 28px;
-  z-index: 2;
-  pointer-events: none;
-  display: flex;
-  align-items: flex-end;
-  gap: 16px;
-}
-.hud-step {
-  display: flex;
-  flex-direction: column;
-  line-height: 1;
-}
-.hud-num {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 34px;
-  font-weight: 500;
-  letter-spacing: -0.04em;
-  margin-top: 4px;
-}
-.hud-sub {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-  color: var(--ink-3);
-  margin-top: 4px;
-}
-.hud-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-bottom: 3px;
-}
-.hud-phase {
-  font-size: 13px;
-  font-weight: 600;
-}
-.hud-phase.phase-run,
-.hud-phase.phase-sub-enter {
-  color: var(--accent);
-}
-.hud-phase.phase-error {
-  color: var(--del);
-}
-.hud-thread {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11.5px;
-  color: var(--ink-3);
-}
-.legend {
-  position: absolute;
-  top: 16px;
-  right: 22px;
-  z-index: 2;
-  display: flex;
-  gap: 14px;
-  font-size: 11.5px;
-  color: var(--ink-3);
-  pointer-events: none;
-}
-.legend span {
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
   display: flex;
   align-items: center;
-  gap: 5px;
+  height: 28px;
+  padding: 0 4px 0 0;
+  background: var(--toolbar);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px var(--shadow);
 }
-.sw {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-}
-.sw-read {
-  background: var(--read);
-}
-.sw-write {
-  background: var(--accent);
-}
-.sw-trigger {
-  background: var(--ink);
-}
-.sw-send {
-  background: var(--send);
-}
-.sw-line {
+.dt-grip {
   width: 16px;
-  border-top: 1.25px solid var(--ink-3);
+  color: var(--muted);
+  opacity: 0.7;
+  font-size: 14px;
 }
-.sw-line.dashed {
-  border-top-style: dashed;
+.dt-btn {
+  width: 24px;
+  height: 22px;
+  margin: 0 2px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.dt-btn .codicon {
+  font-size: 16px;
+}
+.dt-btn:hover:not(:disabled) {
+  background: rgba(90, 93, 94, 0.31);
+}
+.dt-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.dt-btn.continue,
+.dt-btn.step {
+  color: var(--dbg-continue);
+}
+.dt-btn.restart {
+  color: var(--dbg-restart);
 }
 
-/* SVG: 헤어라인 도식 */
-.halo {
-  paint-order: stroke;
-  stroke: var(--paper);
-  stroke-width: 4px;
-  stroke-linejoin: round;
+/* 에디터 호버 위젯: 지금 일어나는 일 */
+.hover-widget {
+  margin: 0 12px 10px;
+  align-self: flex-start;
+  max-width: min(760px, calc(100% - 24px));
+  background: var(--hover-bg);
+  border: 1px solid var(--hover-border);
+  border-radius: 3px;
+  box-shadow: 0 2px 8px var(--shadow);
+  padding: 6px 10px 8px;
+  font-size: 13px;
+}
+.hover-head {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.hover-phase {
+  font-weight: 600;
+}
+.hover-widget.phase-error .hover-phase {
+  color: var(--breakpoint);
+}
+.hover-widget.phase-interrupt .hover-phase,
+.hover-widget.phase-route-pending .hover-phase {
+  color: var(--frame-arrow);
+}
+.hover-title {
+  color: var(--fg-strong);
+  font-weight: 600;
+}
+.hover-detail {
+  white-space: pre-wrap;
+  margin-top: 3px;
+  line-height: 1.5;
+}
+
+/* ───────── 그래프 (Mermaid 스타일) ───────── */
+.graph-svg text {
+  font-family: 'trebuchet ms', verdana, arial, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Pretendard Variable', sans-serif;
 }
 .edge path {
   fill: none;
-  stroke: var(--ink-4);
-  stroke-width: 1.25;
-  transition: stroke 0.2s, opacity 0.2s;
+  stroke: var(--mm-line);
+  stroke-width: 1;
 }
-.edge-cond-in path,
-.edge-cond-out path,
-.edge-command path {
-  stroke-dasharray: 4 4;
+.edge.dotted path {
+  stroke-dasharray: 3 3;
 }
 .edge.active path {
-  stroke: var(--ink);
-  stroke-width: 1.75;
+  stroke: var(--dbg-continue);
+  stroke-width: 2;
 }
 .edge.dim path {
   opacity: 0.25;
 }
-.edge-label {
-  fill: var(--ink-3);
-  font: 11.5px 'IBM Plex Mono', monospace;
-  text-anchor: middle;
-}
-.join-dot {
-  fill: var(--ink-3);
-}
-.arrowhead-base,
-.arrowhead-cond,
-.arrowhead-cmd {
-  fill: var(--ink-4);
+.arrowhead-base {
+  fill: var(--mm-line);
 }
 .arrowhead-active {
-  fill: var(--ink);
+  fill: var(--dbg-continue);
 }
 .arrowhead-dim {
-  fill: var(--line-2);
+  fill: var(--mm-line);
+  opacity: 0.25;
 }
-
-.terminal .t-fill {
-  fill: var(--ink-2);
+.edge-label rect,
+.router-result rect,
+.packet-label rect {
+  fill: var(--mm-label-bg);
 }
-.terminal .t-ring {
-  fill: none;
-  stroke: var(--ink-2);
-  stroke-width: 1.4;
+.edge-label text,
+.router-result text {
+  font-size: 12px;
+  fill: var(--mm-text);
 }
-.terminal.active .t-fill {
-  fill: var(--accent);
-}
-.terminal.active .t-ring {
-  stroke: var(--accent);
-}
-.t-label {
-  font: 500 9.5px 'IBM Plex Mono', monospace;
-  letter-spacing: 0.08em;
-  fill: var(--ink-3);
-  text-anchor: middle;
+.router-result text {
+  font-weight: 700;
 }
 
 .node-box {
-  fill: var(--surface);
-  stroke: var(--line-2);
+  fill: var(--mm-node);
+  stroke: var(--mm-node-border);
   stroke-width: 1;
-  transition: fill 0.2s, stroke 0.2s;
+  transition: fill 0.15s;
 }
 .node-label {
-  fill: var(--ink);
-  font: 500 14px 'IBM Plex Mono', monospace;
+  font-size: 15px;
+  fill: var(--mm-text);
   text-anchor: middle;
   pointer-events: none;
 }
-.node.ran .node-box {
-  stroke: var(--ink-3);
+.terminal-start .node-box {
+  fill-opacity: 0;
+}
+.terminal-end .node-box {
+  fill: var(--mm-end);
 }
 .node.next .node-box {
-  stroke: var(--ink-2);
-  stroke-dasharray: 3 3;
-}
-.node.active .node-box {
-  fill: var(--accent-soft);
-  stroke: var(--accent);
+  stroke-dasharray: 4 3;
   stroke-width: 1.5;
-  stroke-dasharray: none;
-}
-.node-halo {
-  fill: none;
-  stroke: var(--accent-line);
-  stroke-width: 1;
-  stroke-dasharray: 3 4;
-  animation: march 0.9s linear infinite;
-}
-@keyframes march {
-  to {
-    stroke-dashoffset: -14;
-  }
 }
 .node.done .node-box {
-  stroke: var(--ink);
-  stroke-width: 1.5;
+  stroke-width: 2;
 }
-.node.interrupted .node-box {
-  fill: var(--mark);
-  stroke: var(--ink);
-  stroke-width: 1.5;
+/* 현재 실행 중 = VS Code 의 현재 스택 프레임 */
+.node.current .node-box {
   stroke-dasharray: none;
+  fill: var(--stackframe-solid);
+  fill-opacity: 1;
+  stroke: var(--frame-arrow);
+  stroke-width: 2;
+}
+.node.paused .node-box {
+  stroke-dasharray: none;
+  fill: var(--stackframe-solid);
+  stroke: var(--frame-arrow);
+  stroke-width: 2;
 }
 .node.error .node-box {
-  fill: var(--del-soft);
-  stroke: var(--del);
-  stroke-width: 1.5;
+  stroke: var(--breakpoint);
+  stroke-width: 2;
 }
-.node-flag {
-  font: 600 10px 'IBM Plex Mono', monospace;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  fill: var(--ink);
+.bp-dot {
+  fill: var(--breakpoint);
 }
-.node-flag.err {
-  fill: var(--del);
+.frame-arrow {
+  fill: var(--frame-arrow);
 }
-.step-mark {
-  font: 11.5px 'IBM Plex Mono', monospace;
-  fill: var(--ink-3);
+.node-tag {
+  font-size: 11px;
+  fill: var(--muted);
 }
-.send-count {
-  font: 600 13px 'IBM Plex Mono', monospace;
-  fill: var(--send);
+.node-tag.paused {
+  fill: var(--frame-arrow);
+  font-weight: 700;
 }
-.send-item {
-  font: 11.5px 'IBM Plex Mono', monospace;
-  fill: var(--ink-2);
-}
-.send-bullet {
-  fill: var(--send);
-  font-size: 7px;
-}
-
-.container rect {
-  fill: none;
-  stroke: var(--line-2);
-  stroke-width: 1;
-  stroke-dasharray: 6 4;
-}
-.container.active rect {
-  stroke: var(--ink-3);
-}
-.container-label {
-  font: 500 12px 'IBM Plex Mono', monospace;
-  fill: var(--ink);
-}
-.container-kind {
-  font-size: 10px;
-  letter-spacing: 0.09em;
-  fill: var(--ink-3);
-}
-
-.router path {
-  fill: var(--surface);
-  stroke: var(--ink-3);
-  stroke-width: 1.1;
-}
-.router.active path {
-  fill: var(--ink);
-  stroke: var(--ink);
-}
-.router.pending path {
-  fill: var(--mark);
-  stroke: var(--ink);
+.node-tag.error {
+  fill: var(--breakpoint);
+  font-weight: 700;
 }
 .router-label {
-  font: 12px 'IBM Plex Mono', monospace;
-  fill: var(--ink-2);
+  font-size: 12px;
+  fill: var(--mm-text);
   text-anchor: middle;
 }
-.router-result {
-  font: 600 12.5px 'IBM Plex Mono', monospace;
-  fill: var(--ink);
+.send-count {
+  font-size: 14px;
+  font-weight: 700;
+  fill: var(--pk-send);
+}
+.send-item {
+  font-size: 12px;
+  fill: var(--mm-text);
+}
+.cluster rect {
+  fill: var(--mm-cluster);
+  stroke: var(--mm-cluster-border);
+  stroke-width: 1;
+}
+.cluster-label {
+  font-size: 14px;
+  fill: var(--mm-text);
   text-anchor: middle;
 }
 
 .hub-box {
-  fill: var(--surface);
-  stroke: var(--line-2);
+  fill: var(--mm-class);
+  stroke: var(--mm-node-border);
   stroke-width: 1;
+}
+.hub-stereo {
+  font-size: 11px;
+  fill: var(--mm-text);
+  text-anchor: middle;
 }
 .hub-title {
-  font: 500 10px 'IBM Plex Mono', monospace;
-  letter-spacing: 0.09em;
-  fill: var(--ink-2);
-}
-.hub-sub-title {
-  font: 10px 'IBM Plex Mono', monospace;
-  fill: var(--ink-4);
+  font-size: 14px;
+  font-weight: 700;
+  fill: var(--mm-text);
+  text-anchor: middle;
 }
 .hub-rule {
-  stroke: var(--line);
-  stroke-width: 1;
+  stroke: var(--mm-node-border);
 }
 .hub-row rect {
   fill: transparent;
-  transition: fill 0.25s;
+  transition: fill 0.2s;
 }
 .hub-row.read rect {
-  fill: var(--read-soft);
+  fill: rgba(0, 122, 204, 0.16);
 }
 .hub-row.write rect {
-  fill: var(--accent-soft);
+  fill: var(--stackframe);
 }
 .hub-row.changed rect {
-  fill: var(--mark);
+  fill: var(--value-changed);
 }
 .hub-key {
-  font: 500 12px 'IBM Plex Mono', monospace;
-  fill: var(--ink);
+  font-size: 12.5px;
+  fill: var(--mm-text);
 }
 .hub-val {
-  font: 11.5px 'IBM Plex Mono', monospace;
-  fill: var(--ink-3);
+  font-size: 12px;
+  fill: var(--var-string);
   text-anchor: end;
 }
 
@@ -682,764 +736,529 @@ kbd {
 .packet-dot {
   transition: opacity 0.3s;
 }
-.packet-dot circle {
-  stroke: var(--paper);
-  stroke-width: 1.5;
-}
-.packet-label {
-  font: 500 11.5px 'IBM Plex Mono', monospace;
+.packet-label text {
+  font-size: 12px;
 }
 .packet-read circle,
-.packet-read .packet-label {
-  fill: var(--read);
+.packet-read .packet-label text {
+  fill: var(--pk-read);
 }
 .packet-read .packet-trail {
-  stroke: var(--read);
+  stroke: var(--pk-read);
 }
 .packet-write circle,
-.packet-write .packet-label {
-  fill: var(--accent);
+.packet-write .packet-label text {
+  fill: var(--pk-write);
 }
 .packet-write .packet-trail {
-  stroke: var(--accent);
+  stroke: var(--pk-write);
+}
+.packet-write .packet-label text {
+  fill: var(--mm-text);
 }
 .packet-trigger circle,
-.packet-trigger .packet-label {
-  fill: var(--ink);
+.packet-trigger .packet-label text {
+  fill: var(--pk-trigger);
 }
 .packet-send circle,
-.packet-send .packet-label {
-  fill: var(--send);
+.packet-send .packet-label text {
+  fill: var(--pk-send);
 }
 
-/* ───────── 캡션 ───────── */
-.caption {
-  padding: 12px 28px 14px;
-  border-top: 1px solid var(--line);
-  background: var(--paper);
-  flex: 0 0 auto;
-  min-height: 64px;
-}
-.caption-title {
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-}
-.caption.phase-error .caption-title {
-  color: var(--del);
-}
-.caption-detail {
-  white-space: pre-wrap;
-  color: var(--ink-2);
-  font-size: 13px;
-  margin-top: 2px;
-  max-width: 100ch;
-}
-
-/* ───────── 코드 독 ───────── */
-.dock {
-  flex: 0 0 clamp(150px, 25vh, 250px);
+/* ───────── 하단 패널 ───────── */
+.panel-area {
+  flex: 0 0 clamp(190px, 33vh, 320px);
   display: flex;
   flex-direction: column;
-  border-top: 1px solid var(--line);
-  background: var(--bg);
+  border-top: 1px solid var(--border);
   min-height: 0;
+  background: var(--bg);
 }
-.dock-tabs {
+.panel-tabs {
+  height: 35px;
+  flex: 0 0 35px;
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 0 28px;
-  border-bottom: 1px solid var(--line);
+  gap: 4px;
+  padding: 0 8px;
 }
-.dock-tabs button {
+.panel-tabs button {
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
-  padding: 7px 0 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  padding: 4px 6px 3px;
+  margin: 0 4px;
   cursor: pointer;
-  font-size: 12.5px;
-  color: var(--ink-3);
-  margin-bottom: -1px;
+  color: var(--tab-inactive-fg);
+  border-bottom: 1px solid transparent;
 }
-.dock-tabs button.on {
-  color: var(--ink);
-  border-bottom-color: var(--ink);
-  font-weight: 600;
+.panel-tabs button.on {
+  color: var(--fg);
+  border-bottom-color: var(--focus);
 }
-.count {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10.5px;
-  color: var(--ink-3);
-  margin-left: 2px;
+.panel-tabs button:first-child {
+  text-transform: none;
+  font-size: 12px;
 }
-.dock-hint {
-  margin-left: auto;
-  font-size: 11.5px;
-  color: var(--ink-4);
+.panel-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
+
 .code {
   overflow: auto;
   flex: 1;
   min-height: 0;
+  background: var(--bg);
 }
 .code pre {
   margin: 0;
-  padding: 8px 0;
-  font-size: 12.5px;
+  padding: 4px 0 8px;
+  font-size: 13px;
   line-height: 19px;
 }
 .code-line {
   display: flex;
-  transition: background 0.2s;
 }
 .code-line.hl {
-  background: var(--accent-soft);
+  background: var(--stackframe);
+}
+.glyph {
+  width: 18px;
+  flex: 0 0 18px;
+  display: grid;
+  place-items: center;
+  color: var(--frame-arrow);
+}
+.glyph .codicon {
+  font-size: 14px;
 }
 .ln {
-  width: 48px;
-  text-align: right;
-  padding-right: 14px;
-  color: var(--ink-4);
-  user-select: none;
+  width: 36px;
   flex: 0 0 auto;
-  position: relative;
+  text-align: right;
+  padding-right: 18px;
+  color: var(--line-no);
+  user-select: none;
 }
 .code-line.hl .ln {
-  color: var(--accent);
-}
-.code-line.hl + .code-line.hl .ln::before {
-  content: none;
-}
-.code-line.hl .ln::before {
-  content: '';
-  position: absolute;
-  left: 14px;
-  top: 6px;
-  border: 4px solid transparent;
-  border-left: 6px solid var(--accent);
+  color: var(--line-no-active);
 }
 .lc {
   white-space: pre;
 }
-.tk-kw {
-  color: var(--code-kw);
-}
-.tk-str {
-  color: var(--code-str);
-}
-.tk-com {
-  color: var(--code-com);
-  font-style: italic;
-}
-.tk-num {
-  color: var(--code-num);
-}
-.tk-def {
-  color: var(--code-def);
-  font-weight: 600;
-}
-.tk-call {
-  color: var(--code-call);
-}
-.tk-cls {
-  color: var(--code-cls);
-}
-.tk-bi {
-  color: var(--code-call);
-}
-.tk-dec {
-  color: var(--code-cls);
+:root[data-theme='dark'] .lc span {
+  color: var(--shiki-dark) !important;
 }
 
+/* Python Tutor 식 단계 슬라이더 */
+.step-slider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  background: var(--side);
+}
+.step-slider input[type='range'] {
+  flex: 1;
+  accent-color: var(--focus);
+  min-width: 60px;
+}
+.link-btn {
+  background: none;
+  border: none;
+  padding: 2px 2px;
+  color: var(--link);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.link-btn:disabled {
+  color: var(--muted);
+  opacity: 0.6;
+  cursor: default;
+}
+.link-btn:hover:not(:disabled) {
+  text-decoration: underline;
+}
+.step-count {
+  color: var(--muted);
+  white-space: nowrap;
+  min-width: 96px;
+  text-align: right;
+}
+
+/* 디버그 콘솔 */
 .log {
   overflow-y: auto;
   flex: 1;
   min-height: 0;
   position: relative;
-  padding: 4px 0;
+  padding: 2px 0;
+  font-family: 'SF Mono', Menlo, Monaco, Consolas, 'Droid Sans Mono', 'Liberation Mono', 'Pretendard Variable', monospace;
 }
 .log-row {
   display: grid;
-  grid-template-columns: 52px 92px minmax(0, 1fr);
+  grid-template-columns: 44px 112px minmax(0, 1fr);
   gap: 8px;
   width: 100%;
   text-align: left;
   background: none;
   border: none;
-  padding: 3px 28px;
+  padding: 1px 20px;
   cursor: pointer;
   font-size: 12.5px;
+  line-height: 19px;
+  font-family: inherit;
 }
 .log-row:hover {
-  background: var(--line);
+  background: var(--list-hover);
 }
 .log-row.current {
-  background: var(--accent-soft);
+  background: var(--stackframe);
 }
 .log-row.future {
-  color: var(--ink-4);
+  opacity: 0.45;
 }
 .log-step {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11.5px;
-  color: var(--ink-3);
+  color: var(--var-number);
 }
 .log-phase {
-  color: var(--ink-3);
-  font-size: 12px;
+  color: var(--muted);
 }
 .log-title {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.log-row.phase-error .log-phase {
-  color: var(--del);
+.log-row.phase-error .log-title {
+  color: var(--breakpoint);
 }
 
 .bottom-panel {
-  border-top: 1px solid var(--line);
-  max-height: 32%;
-  overflow: auto;
+  display: contents;
+}
+
+/* ───────── 실행 및 디버그 사이드바 ───────── */
+.launch {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: none;
+  font-size: 13px;
+  min-width: 0;
+}
+.launch-run {
+  background: none;
+  border: none;
+  color: #388a34;
+  cursor: pointer;
+  height: 22px;
+  display: grid;
+  place-items: center;
+}
+:root[data-theme='dark'] .launch-run {
+  color: #89d185;
+}
+.launch select {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 2px;
+  height: 22px;
+  font-size: 12px;
+  max-width: 170px;
+}
+.launch-name {
+  font-size: 12px;
+}
+.launch-input {
+  margin: 0;
+  padding: 4px 20px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.vars .tree-row {
+  font-size: 13px;
+}
+.scope {
+  font-weight: 400;
+  color: var(--fg);
+}
+.v-name {
+  color: var(--var-name);
   flex: 0 0 auto;
 }
-
-/* ───────── 재생 바 ───────── */
-.transport {
-  grid-area: trans;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 8px 18px;
-  border-top: 1px solid var(--line);
-  background: var(--bg);
+.v-sep {
+  color: var(--fg);
+  margin-left: -4px;
 }
-.transport-buttons,
-.transport-right {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.transport-right {
-  gap: 14px;
-}
-.icon-btn {
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  background: none;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--ink-2);
-}
-.icon-btn:hover:not(:disabled) {
-  background: var(--line);
-  color: var(--ink);
-}
-.icon-btn:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-.play-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: none;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  background: var(--ink);
-  color: var(--paper);
-  margin: 0 4px;
-}
-.play-btn:hover {
-  background: var(--accent);
-}
-.scrubber {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.scrub-meta {
-  display: flex;
-  gap: 10px;
-  font-size: 12px;
-  min-width: 0;
-}
-.scrub-phase {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  color: var(--ink-3);
-  white-space: nowrap;
-}
-.scrub-title {
-  white-space: nowrap;
+.v-val {
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--ink-2);
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12.5px;
 }
-.scrub-track {
-  position: relative;
-  height: 22px;
-  cursor: pointer;
-  touch-action: none;
+.v-string {
+  color: var(--var-string);
 }
-.scrub-track::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 14px;
-  height: 1px;
-  background: var(--line-2);
+.v-number {
+  color: var(--var-number);
 }
-.scrub-fill {
-  position: absolute;
-  left: 0;
-  top: 13.5px;
-  height: 2px;
-  background: var(--ink);
-  pointer-events: none;
+.v-boolean {
+  color: var(--var-boolean);
 }
-.scrub-tick {
-  position: absolute;
-  top: 10px;
-  width: 1px;
-  height: 9px;
-  background: var(--ink-4);
-  transform: translateX(-0.5px);
-  pointer-events: none;
+.v-value {
+  color: var(--fg);
 }
-.scrub-tick.major {
-  height: 11px;
-  top: 9px;
-  background: var(--ink-3);
+.v-type {
+  color: var(--var-type);
 }
-.scrub-tick.ckpt {
-  width: 5px;
-  height: 5px;
-  top: 12px;
-  background: var(--paper);
-  border: 1px solid var(--ink-2);
-  transform: translateX(-2.5px) rotate(45deg);
+.v-undef {
+  color: var(--muted);
 }
-.scrub-tick.pause {
-  width: 3px;
-  height: 13px;
-  top: 8px;
-  background: var(--mark-strong);
-  transform: translateX(-1.5px);
+.v-old {
+  color: var(--muted);
+  text-decoration: line-through;
 }
-.scrub-tick.err {
-  width: 3px;
-  height: 13px;
-  top: 8px;
-  background: var(--del);
+.v-hint {
+  margin-left: auto;
+  padding-left: 8px;
+  color: var(--muted);
+  font-size: 11.5px;
+  flex: 0 0 auto;
 }
-.scrub-label {
-  position: absolute;
-  top: -3px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 9.5px;
-  color: var(--ink-3);
-  transform: translateX(-1px);
-  pointer-events: none;
+.tree-row.mark-changed {
+  background: var(--value-changed);
 }
-.scrub-head {
-  position: absolute;
-  top: 7px;
-  width: 11px;
-  height: 15px;
-  border-radius: 3px;
-  background: var(--accent);
-  transform: translateX(-5.5px);
-  pointer-events: none;
-  box-shadow: 0 0 0 2px var(--bg);
+.tree-row.mark-manual {
+  background: var(--stackframe);
 }
-.scrub-more {
-  position: absolute;
-  right: -14px;
-  top: 4px;
-  color: var(--ink-3);
+.tree-row.mark-added {
+  background: var(--inserted);
+}
+.tree-row.mark-removed {
+  background: var(--removed);
+}
+.tree-note {
+  padding: 0 12px 6px 32px;
   font-size: 12px;
+  color: var(--muted);
+  white-space: normal;
 }
-.seg {
+.compare-group + .compare-group {
+  border-top: 1px solid var(--border);
+  padding-top: 2px;
+}
+.set-value {
+  margin: 2px 12px 6px 32px;
+  padding: 6px 8px;
+  border: 1px solid var(--focus);
+  background: var(--bg);
+}
+.set-value-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.set-value-row {
   display: flex;
-  border: 1px solid var(--line-2);
-  border-radius: 6px;
-  overflow: hidden;
+  gap: 6px;
+  align-items: center;
 }
-.seg button {
-  background: none;
-  border: none;
-  padding: 3px 8px;
-  cursor: pointer;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  color: var(--ink-3);
+.set-value-row input[type='range'] {
+  flex: 1;
+  accent-color: var(--focus);
+  min-width: 60px;
 }
-.seg button + button {
-  border-left: 1px solid var(--line-2);
+.set-value-row .input {
+  width: 100%;
 }
-.seg button.on {
-  background: var(--ink);
-  color: var(--paper);
-}
-.counter {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-  color: var(--ink-2);
-  min-width: 58px;
-  text-align: right;
-}
-.counter-sep {
-  color: var(--ink-4);
-  margin: 0 3px;
+.set-value-row input[type='range'] + .input {
+  width: 64px;
+  flex: 0 0 64px;
 }
 
-/* ───────── 인스펙터 (오른쪽) ───────── */
+.thread {
+  font-weight: 400;
+}
+.state-label {
+  margin-left: auto;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  background: var(--state-label);
+  border-radius: 2px;
+  padding: 0 5px;
+  line-height: 16px;
+}
+.stack-frame.top {
+  background: var(--stackframe);
+}
+.sf-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.empty-view {
+  padding: 4px 20px 8px;
+  color: var(--muted);
+  font-size: 13px;
+  white-space: normal;
+}
+.bp-row input {
+  margin: 0 2px 0 0;
+  accent-color: var(--focus);
+}
+.bp-icon {
+  color: var(--breakpoint);
+  font-size: 12px !important;
+}
+
+/* 상태 표시줄 */
+.statusbar {
+  grid-area: sb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--side);
+  border-top: 1px solid var(--border);
+  color: var(--fg);
+  font-size: 12px;
+  height: 22px;
+  overflow: hidden;
+}
+.statusbar.debugging {
+  background: var(--status-debug);
+  color: var(--status-debug-fg);
+  border-top-color: transparent;
+}
+.sb-left,
+.sb-right {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+}
+.sb-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 7px;
+  white-space: nowrap;
+  height: 100%;
+}
+.sb-item .codicon {
+  font-size: 14px;
+}
+.sb-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  font-size: 12px;
+}
+.sb-btn:hover {
+  background: rgba(31, 31, 31, 0.07);
+}
+
+/* ───────── 시나리오 실험 패널 (VS Code 위젯 모양) ───────── */
 .panel {
-  padding: 18px 22px 20px;
-  border-bottom: 1px solid var(--line);
+  padding: 2px 20px 8px;
+  white-space: normal;
 }
 .panel-head {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 8px;
+  margin: 4px 0 6px;
 }
 .panel-head h2 {
-  font-size: 14px;
-  font-weight: 650;
+  font-size: 13px;
+  font-weight: 600;
   margin: 0;
-  letter-spacing: -0.01em;
-}
-.panel-meta {
-  margin-left: auto;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  color: var(--ink-3);
+  color: var(--fg-strong);
 }
 .panel h3 {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  margin: 18px 0 8px;
-}
-.input-preview {
-  margin: 0;
-  font-size: 12px;
-  white-space: pre-wrap;
-  word-break: break-all;
-  color: var(--ink-2);
-}
-.note {
-  margin: 8px 0 0;
-  font-size: 12.5px;
-  color: var(--ink-3);
-}
-
-.pending {
-  margin: 0 -22px 12px;
-  padding: 10px 22px;
-  background: var(--accent-soft);
-}
-.pending .eyebrow {
-  color: var(--accent);
-  margin-bottom: 4px;
-}
-.pending-row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 8px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11.5px;
-  padding: 1px 0;
-}
-.pending-node {
-  font-weight: 600;
-}
-.pending-val {
-  word-break: break-all;
-  color: var(--ink-2);
-}
-
-.ledger {
-  margin: 0;
-}
-.ledger-row {
-  padding: 9px 0 10px;
-  border-top: 1px solid var(--line);
-  position: relative;
-}
-.ledger-row:first-child {
-  border-top: none;
-  padding-top: 2px;
-}
-.ledger-row dt {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 3px;
-}
-.ledger-row .key {
-  font-family: 'IBM Plex Mono', monospace;
-  font-weight: 600;
-  font-size: 12.5px;
-}
-.ledger-row .type {
-  font-family: 'IBM Plex Mono', monospace;
   font-size: 11px;
-  color: var(--ink-3);
-}
-.ledger-row .reducer {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10.5px;
-  color: var(--ink-2);
-  border-bottom: 1px dotted var(--ink-3);
-}
-.changed-mark {
-  margin-left: auto;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.08em;
+  font-weight: 700;
   text-transform: uppercase;
-  color: var(--ink);
-  background: var(--mark);
-  padding: 0 5px;
+  margin: 12px 0 4px;
+  color: var(--fg);
 }
-.ledger-row dd {
-  margin: 0;
-  word-break: break-word;
+.muted {
+  color: var(--muted);
 }
-.writers {
-  margin-top: 4px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  color: var(--ink-3);
-}
-.v-unset {
-  color: var(--ink-4);
-  font-size: 12.5px;
-}
-.v-str,
-.v-mono {
-  font-family: 'IBM Plex Mono', monospace;
+.small {
   font-size: 12px;
 }
-.ledger-row.changed .v-str,
-.ledger-row.changed .diff-line.add > span:last-child {
-  background: var(--mark);
-}
-.v-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-}
-.v-list li {
-  display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
-  padding: 1px 0;
-}
-.v-list li.added {
-  color: var(--add);
-  background: var(--add-soft);
-}
-.v-idx {
-  color: var(--ink-4);
-  font-size: 11px;
-}
-.v-list li.added .v-idx {
-  color: var(--add);
-}
-.diff {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-}
-.diff-line {
-  display: grid;
-  grid-template-columns: 16px minmax(0, 1fr);
-  padding: 1px 4px 1px 0;
-}
-.diff-line.del {
-  color: var(--del);
-  background: var(--del-soft);
-}
-.diff-line.add {
-  color: var(--add);
-  background: var(--add-soft);
-}
-.diff-sign {
-  text-align: center;
-}
-
-.v-msgs {
-  display: flex;
-  flex-direction: column;
-}
-.msg {
-  display: grid;
-  grid-template-columns: 14px 48px minmax(0, 1fr) auto;
-  gap: 4px;
-  align-items: baseline;
-  padding: 3px 0;
-  border-bottom: 1px dashed var(--line);
-  font-size: 12.5px;
-}
-.msg:last-child {
-  border-bottom: none;
-}
-.msg-gutter {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-  text-align: center;
-}
-.msg-role {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10.5px;
-  color: var(--ink-3);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.msg-id {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10.5px;
-  color: var(--ink-4);
-}
-.msg-note {
-  grid-column: 3 / -1;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-.msg-new {
-  background: var(--add-soft);
-}
-.msg-new .msg-gutter {
-  color: var(--add);
-}
-.msg-replaced {
-  background: var(--mark);
-}
-.msg-replaced .msg-note {
-  color: var(--ink);
-}
-.msg-dup {
-  background: var(--del-soft);
-}
-.msg-dup .msg-gutter,
-.msg-dup .msg-note {
-  color: var(--del);
-}
-.msg-was {
-  display: block;
-  text-decoration: line-through;
-  color: var(--ink-3);
-  font-size: 11.5px;
-}
-.v-msgs.inline {
-  display: inline-flex;
-  width: 100%;
-}
-
-.editor {
-  margin-top: 10px;
-  padding: 10px 12px;
-  background: var(--mark);
-}
-.editor .eyebrow {
-  color: var(--ink);
-}
-.editor-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 6px;
-}
-.editor input[type='range'] {
-  flex: 1;
-  accent-color: var(--ink);
-}
-.editor-num {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-  min-width: 38px;
-}
-.sub-state {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px dashed var(--line-2);
-}
-.sub-head {
-  display: flex;
-  align-items: baseline;
-  margin-bottom: 6px;
-}
-
-/* 폼 요소 */
 .btn {
-  border: 1px solid var(--line-2);
-  background: var(--surface);
-  border-radius: 6px;
-  padding: 6px 12px;
+  background: var(--button2);
+  color: var(--button2-fg);
+  border: 1px solid transparent;
+  border-radius: 2px;
+  padding: 4px 11px;
   cursor: pointer;
   font-size: 13px;
-  color: var(--ink);
-  text-align: left;
+  line-height: 18px;
+  text-align: center;
 }
 .btn:hover:not(:disabled) {
-  border-color: var(--ink-3);
+  background: var(--button2-hover);
 }
 .btn:disabled {
-  opacity: 0.4;
+  opacity: 0.5;
   cursor: default;
 }
-.btn-primary,
 .btn-accent,
-.btn-ok {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--paper);
+.btn-ok,
+.btn-primary,
+.button {
+  background: var(--button);
+  color: #ffffff;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  padding: 4px 11px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 18px;
 }
-.btn-primary:hover:not(:disabled),
 .btn-accent:hover:not(:disabled),
-.btn-ok:hover:not(:disabled) {
-  background: var(--accent);
-  border-color: var(--accent);
+.btn-ok:hover:not(:disabled),
+.btn-primary:hover:not(:disabled),
+.button:hover {
+  background: var(--button-hover);
 }
 .btn-err {
-  color: var(--del);
+  color: var(--breakpoint);
 }
 .stack > .btn {
   white-space: normal;
+  text-align: left;
 }
 .text-input,
+.input,
 textarea.text-input {
   flex: 1;
   min-width: 0;
-  background: var(--surface);
-  border: 1px solid var(--line-2);
-  color: var(--ink);
-  border-radius: 6px;
-  padding: 6px 9px;
-  font: inherit;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--fg);
+  border-radius: 2px;
+  padding: 3px 6px;
   font-size: 13px;
+  line-height: 18px;
 }
-.text-input:focus {
-  outline: none;
-  border-color: var(--ink);
+.text-input:focus,
+.input:focus {
+  outline: 1px solid var(--focus);
+  outline-offset: -1px;
+  border-color: var(--focus);
 }
 textarea.text-input {
   width: 100%;
@@ -1454,457 +1273,320 @@ textarea.text-input {
 .stack {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 .presets {
   display: flex;
   flex-direction: column;
-  border-top: 1px solid var(--line);
+  margin: 0 -20px;
 }
 .preset {
   background: none;
   border: none;
-  border-bottom: 1px solid var(--line);
-  padding: 6px 0 6px 16px;
+  padding: 0 20px 0 22px;
+  min-height: 22px;
+  line-height: 22px;
   cursor: pointer;
   font-size: 13px;
   text-align: left;
-  color: var(--ink-2);
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   position: relative;
 }
 .preset::before {
   content: '';
   position: absolute;
-  left: 2px;
-  top: 50%;
+  left: 10px;
+  top: 8px;
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  border: 1px solid var(--ink-4);
-  transform: translateY(-50%);
+  border: 1px solid var(--muted);
 }
 .preset:hover {
-  color: var(--ink);
+  background: var(--list-hover);
 }
 .preset.on {
-  color: var(--ink);
+  background: var(--list-active);
 }
 .preset.on::before {
-  background: var(--ink);
-  border-color: var(--ink);
+  background: var(--focus);
+  border-color: var(--focus);
 }
 .callout {
   font-size: 12.5px;
-  color: var(--ink-2);
+  line-height: 1.5;
+  color: var(--fg);
 }
 .callout.info {
-  color: var(--ink-3);
+  color: var(--muted);
 }
 .callout.warn {
-  background: var(--mark);
-  color: var(--ink);
-  padding: 10px 12px;
+  background: var(--stackframe);
+  padding: 6px 8px;
+  border: 1px solid var(--frame-arrow);
 }
 .callout.err {
-  background: var(--del-soft);
-  color: var(--ink);
-  padding: 10px 12px;
+  background: var(--removed);
+  padding: 6px 8px;
 }
 .callout b {
-  color: var(--ink);
   font-weight: 600;
+  color: var(--fg-strong);
 }
 .thread-tabs {
   display: flex;
-  gap: 14px;
+  gap: 2px;
   flex-wrap: wrap;
-  border-bottom: 1px solid var(--line);
 }
 .thread-tab {
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  padding: 4px 0 6px;
-  margin-bottom: -1px;
+  background: var(--button2);
+  border: 1px solid transparent;
+  border-radius: 2px;
+  padding: 1px 8px;
   cursor: pointer;
-  font-family: 'IBM Plex Mono', monospace;
   font-size: 12px;
-  color: var(--ink-3);
+  font-family: 'SF Mono', Menlo, Monaco, Consolas, 'Droid Sans Mono', monospace;
 }
 .thread-tab.on {
-  color: var(--ink);
-  border-bottom-color: var(--ink);
+  background: var(--list-active);
+  border-color: var(--focus);
 }
 table.mini {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 12.5px;
 }
 table.mini th,
 table.mini td {
-  border-bottom: 1px solid var(--line);
-  padding: 5px 6px 5px 0;
+  border-bottom: 1px solid var(--border);
+  padding: 3px 6px 3px 0;
   text-align: left;
   vertical-align: top;
 }
 table.mini th {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10.5px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--muted);
 }
 table.mini tr.current td {
-  background: var(--mark);
+  background: var(--stackframe);
 }
 .rules {
   display: flex;
   flex-direction: column;
-  border-top: 1px solid var(--line);
+  margin: 0 -20px;
 }
 .rule {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
-  border-bottom: 1px solid var(--line);
-  padding: 5px 4px;
-  color: var(--ink-3);
+  padding: 0 20px;
+  line-height: 22px;
+  font-family: 'SF Mono', Menlo, Monaco, Consolas, 'Droid Sans Mono', monospace;
+  font-size: 12.5px;
 }
 .rule.matched {
-  color: var(--ink);
-  background: var(--mark);
+  background: var(--stackframe);
   font-weight: 600;
 }
 
-/* reducer 비교 */
-.compare {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0;
-  margin: 0 -22px;
-  border-top: 1px solid var(--line);
-}
-.compare-col {
-  padding: 10px 10px 12px;
-  min-width: 0;
-}
-.compare-col:first-child {
-  padding-left: 22px;
-}
-.compare-col:last-child {
-  padding-right: 22px;
-}
-.compare-col + .compare-col {
-  border-left: 1px solid var(--line);
-}
-.compare-col h4 {
-  margin: 0;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 12.5px;
-}
-.compare-col.changed h4 {
-  background: var(--mark);
-  display: inline;
-}
-.compare-col .reducer {
-  display: block;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10.5px;
-  color: var(--ink-3);
-  margin: 2px 0 6px;
-}
-.compare-note {
-  font-size: 11.5px;
-  color: var(--ink-3);
-  margin-bottom: 8px;
-  min-height: 52px;
-}
-.compare-col .msg {
-  grid-template-columns: 12px minmax(0, 1fr) auto;
-  font-size: 12px;
-}
-.compare-col .msg-role {
-  display: none;
-}
-
-/* 타임라인 */
+/* 체크포인트 타임라인 (VS Code 의 TIMELINE 뷰 느낌) */
 .timeline {
   display: flex;
   flex-direction: column;
+  margin: 0 -20px;
 }
 .timeline-empty {
   font-size: 12.5px;
-  color: var(--ink-3);
+  color: var(--muted);
 }
 .tl-summary {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11px;
-  color: var(--ink-3);
-  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 0 20px 2px;
 }
 .tl-chain {
   display: flex;
   flex-direction: column;
-  position: relative;
 }
 .tl-row {
   display: grid;
-  grid-template-columns: 14px 30px 56px minmax(0, 1fr) auto;
+  grid-template-columns: 16px 28px 52px minmax(0, 1fr) auto;
   grid-template-areas: 'dot id step writes src' '. . next next next';
-  align-items: baseline;
+  align-items: center;
   gap: 0 6px;
   text-align: left;
   background: none;
   border: none;
-  border-radius: 4px;
-  padding: 4px 6px 4px 0;
-  font-size: 12px;
+  padding: 2px 20px;
+  font-size: 12.5px;
   cursor: pointer;
   position: relative;
-}
-.tl-row::before {
-  content: '';
-  position: absolute;
-  left: 6px;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--line-2);
-}
-.tl-chain > .tl-row:first-child::before {
-  top: 12px;
+  line-height: 18px;
 }
 .tl-row:disabled {
   cursor: default;
 }
 .tl-row:hover:not(:disabled) {
-  background: var(--line);
+  background: var(--list-hover);
 }
 .tl-row.selected {
-  background: var(--mark);
+  background: var(--list-active);
+  outline: 1px solid var(--focus);
+  outline-offset: -1px;
 }
 .tl-dot {
   grid-area: dot;
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  border: 1.5px solid var(--ink-3);
-  background: var(--paper);
-  position: relative;
-  z-index: 1;
-  margin-left: 2px;
-  align-self: center;
+  border: 1px solid var(--muted);
+  justify-self: center;
 }
 .tl-row.head .tl-dot {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-.tl-row.src-update .tl-dot {
-  border-style: dashed;
-  border-color: var(--ink);
+  background: var(--frame-arrow);
+  border-color: var(--frame-arrow);
 }
 .tl-id {
   grid-area: id;
-  color: var(--ink-3);
-  font-size: 11px;
+  color: var(--muted);
+  font-size: 12px;
 }
 .tl-step {
   grid-area: step;
+  color: var(--var-number);
   white-space: nowrap;
-  font-size: 11.5px;
 }
 .tl-src {
   grid-area: src;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10.5px;
-  color: var(--ink-3);
+  font-size: 11px;
+  color: var(--muted);
 }
 .tl-src.src-update {
-  color: var(--ink);
-  background: var(--mark);
-  padding: 0 4px;
+  color: var(--var-name);
 }
 .tl-writes {
   grid-area: writes;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11.5px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .tl-next {
   grid-area: next;
-  color: var(--ink-3);
-  font-size: 11px;
+  color: var(--muted);
+  font-size: 11.5px;
 }
 .tl-paused {
-  color: var(--ink);
-  background: var(--mark);
-  padding: 0 4px;
+  color: var(--frame-arrow);
   margin-right: 6px;
-  text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 0.06em;
+  font-weight: 700;
 }
 .tl-head {
   position: absolute;
-  right: 6px;
-  bottom: 4px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 9.5px;
-  letter-spacing: 0.08em;
-  color: var(--accent);
+  right: 20px;
+  bottom: 2px;
+  font-size: 10.5px;
+  color: var(--frame-arrow);
+  font-weight: 700;
 }
 .tl-forks {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-left: 6px;
+  margin-left: 26px;
+  border-left: 1px solid var(--border);
+}
+.tl-forks .tl-row {
   padding-left: 12px;
-  border-left: 1px solid var(--line-2);
 }
 .tl-branch-label {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.07em;
+  font-size: 11px;
   text-transform: uppercase;
-  color: var(--ink-3);
-  margin: 6px 0 2px;
+  color: var(--muted);
+  padding: 4px 12px 0;
 }
 .tl-branch-fork > .tl-branch-label {
-  color: var(--ink);
-}
-.tl-branch-fork > .tl-branch-label::after {
-  content: ' ↳ update_state';
-  color: var(--ink-3);
-  text-transform: none;
-  letter-spacing: 0;
+  color: var(--var-name);
 }
 
-/* stream 콘솔 */
+/* stream 출력 */
 .streams {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex: 1;
+  min-height: 0;
 }
 .stream-col {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 .stream-col + .stream-col {
-  border-left: 1px solid var(--line);
+  border-left: 1px solid var(--border);
 }
 .stream-head {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11.5px;
-  padding: 7px 28px 6px;
-  border-bottom: 1px solid var(--line);
-}
-.stream-col + .stream-col .stream-head,
-.stream-col + .stream-col .stream-chunk {
-  padding-left: 16px;
+  font-family: 'SF Mono', Menlo, Monaco, Consolas, 'Droid Sans Mono', monospace;
+  font-size: 12px;
+  padding: 2px 20px 4px;
+  color: var(--muted);
 }
 .stream-body {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 11.5px;
-  padding: 4px 0;
+  font-family: 'SF Mono', Menlo, Monaco, Consolas, 'Droid Sans Mono', 'Pretendard Variable', monospace;
+  font-size: 12.5px;
   overflow: auto;
-  min-height: 100px;
-  max-height: 190px;
+  flex: 1;
+  min-height: 0;
 }
 .stream-chunk {
-  padding: 2px 28px;
+  padding: 1px 20px;
   word-break: break-all;
+  line-height: 19px;
 }
 .stream-chunk .k {
-  color: var(--ink-4);
+  color: var(--var-number);
 }
 .stream-chunk.fresh {
-  background: var(--mark);
+  background: var(--value-changed);
 }
 
-@media (max-width: 1180px) {
-  .app {
+@media (max-width: 1100px) {
+  body {
+    overflow: auto;
+  }
+  .workbench,
+  .workbench.no-explorer {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto;
-    grid-template-areas: 'side' 'stage' 'insp' 'trans';
+    grid-template-rows: auto auto auto 22px;
+    grid-template-areas: 'ex' 'ed' 'dbg' 'sb';
     height: auto;
-    min-height: 100vh;
   }
-  .sidebar {
-    position: relative;
+  .activitybar {
+    display: none;
+  }
+  .explorer {
     border-right: none;
-    border-bottom: 1px solid var(--line);
+    max-height: 260px;
   }
-  .chapters {
-    display: flex;
-    gap: 2px;
-    overflow-x: auto;
-    padding: 0 12px 10px;
+  .editor-group {
+    min-height: 460px;
   }
-  .chapter-group {
-    display: flex;
-    flex: 0 0 auto;
-    margin: 0;
+  .panel-area {
+    flex-basis: 340px;
   }
-  .chapter-group > .eyebrow,
-  .sidebar-foot .keys {
-    display: none;
-  }
-  .chapter {
-    white-space: nowrap;
-    width: auto;
-    flex: 0 0 auto;
-    grid-template-columns: 22px auto;
-  }
-  .sidebar-foot {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    border: none;
-    padding: 4px;
-  }
-  .stage {
-    min-height: 100vh;
-  }
-  .canvas {
-    min-height: 380px;
-  }
-  .chapter-head,
-  .caption,
-  .dock-tabs {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-  .more {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
-  }
-  .legend {
-    display: none;
-  }
-  .hud {
-    left: 16px;
-  }
-  .inspector {
+  .debug {
     border-left: none;
+    border-top: 1px solid var(--border);
+  }
+  .sidebar-scroll {
     overflow: visible;
   }
-  .transport {
+  .statusbar {
     position: sticky;
     bottom: 0;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 8px 12px;
   }
-  .scrubber {
-    order: 3;
-    flex-basis: 100%;
-  }
-  .transport-right {
-    margin-left: auto;
+  .sb-right .sb-item:nth-last-child(-n + 2) {
+    display: none;
   }
 }

@@ -164,7 +164,7 @@ export const s10: Scenario = {
   ],
   watch: [
     '부모 super-step 2 동안 서브그래프 내부가 sub step 0, 1, 2, 3 으로 진행',
-    '오른쪽 State 패널 아래 "서브그래프 내부 State" 에 전용 키(queries, docs)가 채워짐',
+    '오른쪽 변수 창의 "Subgraph: research" 스코프에 전용 키(queries, docs)가 채워짐',
     '종료 시 공유 키 findings 만 부모 state 로 올라감',
   ],
   build: () => ({

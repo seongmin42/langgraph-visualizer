@@ -179,7 +179,7 @@ export const s07: Scenario = {
     'update_state(config, values) 로 과거 시점의 state 를 고치면 그 checkpoint 를 부모로 하는 새 checkpoint 가 만들어지고, 거기서 실행하면 새로운 분기(fork)가 생깁니다. 원래 히스토리는 그대로 남습니다.',
   ],
   watch: [
-    '타임라인에서 과거 checkpoint 를 클릭하면 State 패널이 그 시점 값으로 복원',
+    '타임라인에서 과거 checkpoint 를 클릭하면 변수 창이 그 시점 값으로 복원',
     'replay: write_draft 부터만 다시 실행되고 (생성 #2) 처럼 결과가 달라짐',
     'fork: source="update" checkpoint 가 생기고 타임라인이 갈라짐',
   ],

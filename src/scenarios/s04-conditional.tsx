@@ -173,7 +173,7 @@ function RouterLab({ session, frame, snap }: PanelProps) {
       <div className={`callout ${pending ? 'warn' : 'info'}`} style={{ marginTop: 8 }}>
         {pending ? (
           <>
-            <b>router 직전에서 멈췄습니다.</b> 위 State 패널의 <b>score</b> 슬라이더로 값을 바꾸고 "적용"을 누르면, router
+            <b>router 직전에서 멈췄습니다.</b> 위 변수 창의 <b>score</b> 값을 바꾸고 적용하면, router
             가 바뀐 값으로 다른 경로를 고릅니다. 그대로 다음 스텝으로 가면 원래 값으로 진행합니다.
           </>
         ) : (
@@ -194,7 +194,7 @@ export const s04: Scenario = {
     'router 는 갱신된 state 를 읽기만 하고 경로 이름을 반환합니다. path_map 이 그 이름을 실제 노드로 연결합니다.',
   ],
   watch: [
-    '보라색 마름모(router)가 state 의 score 를 읽는 순간',
+    '마름모(router)에 현재 프레임 화살표가 와서 state 의 score 를 읽는 순간',
     '선택된 경로만 밝아지고 나머지 경로는 흐려짐',
     'router 직전 breakpoint 에서 score 를 바꾸면 다른 노드로 감',
   ],

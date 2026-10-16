@@ -1,12 +1,13 @@
-import { Moon, Sun } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useReducer, useState, useSyncExternalStore } from 'react';
-import { CodePanel } from './components/CodePanel';
+import '@vscode/codicons/dist/codicon.css';
+import { useCallback, useEffect, useMemo, useReducer, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { CodePanel, firstLineOf } from './components/CodePanel';
+import { DebugToolbar, StatusBar, StepSlider } from './components/Debug';
 import { EventLog } from './components/EventLog';
 import { GraphView, phaseLabel } from './components/GraphView';
 import { StatePanel } from './components/StatePanel';
-import { Transport } from './components/Transport';
 import { pyRepr } from './engine/pyrepr';
 import { Runtime } from './engine/runtime';
+import { END, START, type Frame } from './engine/types';
 import { Player } from './player';
 import { SCENARIOS } from './scenarios';
 import { CompareView } from './scenarios/s02-reducers';
@@ -15,14 +16,7 @@ import type { Scenario, Session } from './scenarios/types';
 function createSession(scenario: Scenario, variant: string, rerender: () => void): Session {
   const built = scenario.build(variant);
   const runtime = new Runtime(built.graph, built.options);
-  const session = {
-    scenario,
-    variant,
-    built,
-    runtime,
-    ui: scenario.initUi?.() ?? {},
-    rerender,
-  } as Session;
+  const session = { scenario, variant, built, runtime, ui: scenario.initUi?.() ?? {}, rerender } as Session;
   session.player = new Player(scenario.initialFrame?.(session) ?? runtime.idleFrame());
   session.player.onNeedRun = () => scenario.defaultRun(session);
   session.player.restartOnEnd = !built.options?.checkpointer;
@@ -37,11 +31,14 @@ function readHash() {
   return { sc, v };
 }
 
-const GROUPS: { title: string; nums: number[] }[] = [
-  { title: '기초', nums: [1, 2, 3] },
-  { title: '흐름 제어', nums: [4, 5, 9] },
-  { title: '지속성과 사람의 개입', nums: [6, 7, 8] },
-  { title: '구성과 관찰', nums: [10, 11] },
+/** 시나리오 = 튜토리얼 폴더 안의 파이썬 파일 하나 */
+export const fileName = (s: Scenario) => `${String(s.num).padStart(2, '0')}_${s.id}.py`;
+
+const FOLDERS: { name: string; nums: number[] }[] = [
+  { name: '1_basics', nums: [1, 2, 3] },
+  { name: '2_control_flow', nums: [4, 5, 9] },
+  { name: '3_persistence', nums: [6, 7, 8] },
+  { name: '4_composition', nums: [10, 11] },
 ];
 
 type Theme = 'light' | 'dark';
@@ -67,12 +64,33 @@ function useTheme(): [Theme, () => void] {
   return [theme, () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))];
 }
 
+/** 사이드바의 접을 수 있는 섹션 (VS Code pane) */
+function Pane({ title, actions, children, defaultOpen = true, grow }: { title: string; actions?: ReactNode; children: ReactNode; defaultOpen?: boolean; grow?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section className={`pane ${open ? 'open' : ''} ${grow ? 'grow' : ''}`}>
+      <div className="pane-header" onClick={() => setOpen((x) => !x)} role="button" aria-expanded={open}>
+        <i className={`codicon codicon-chevron-${open ? 'down' : 'right'}`} />
+        <span className="pane-title">{title}</span>
+        {actions && (
+          <span className="pane-actions" onClick={(e) => e.stopPropagation()}>
+            {actions}
+          </span>
+        )}
+      </div>
+      {open && <div className="pane-body">{children}</div>}
+    </section>
+  );
+}
+
+const SPEEDS = [0.5, 1, 2, 4];
+
 export default function App() {
   const [{ sc, v }, setSel] = useState(readHash);
   const [nonce, setNonce] = useState(0);
   const [, rerender] = useReducer((x: number) => x + 1, 0);
-  const [more, setMore] = useState(false);
-  const [dock, setDock] = useState<'code' | 'log'>('code');
+  const [panel, setPanel] = useState<'code' | 'console' | 'output'>('code');
+  const [explorer, setExplorer] = useState(true);
   const [theme, toggleTheme] = useTheme();
 
   const session = useMemo(() => createSession(sc, v, rerender), [sc, v, nonce]);
@@ -81,16 +99,13 @@ export default function App() {
   useEffect(() => {
     const target = `#/${sc.id}${v ? `/${v}` : ''}`;
     if (location.hash !== target) history.replaceState(null, '', target);
+    setPanel(sc.BottomPanel ? 'output' : 'code');
   }, [sc, v]);
   useEffect(() => {
     const onHash = () => setSel(readHash());
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
-
-  useEffect(() => {
-    document.querySelector('.chapter.on')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  }, [sc]);
 
   const snap = useSyncExternalStore(session.player.subscribe, session.player.getSnapshot);
   const frame = snap.frame;
@@ -100,13 +115,21 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement;
       if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') return;
-      if (e.key === ' ') {
-        // 버튼에 포커스가 있을 때 Space 가 버튼 클릭으로도 처리되지 않도록
-        if (el.tagName === 'BUTTON') el.blur();
+      // VS Code 디버거 단축키 + 간단한 키
+      if (e.key === 'F5' && (e.ctrlKey || e.metaKey) && e.shiftKey) {
         e.preventDefault();
+        setNonce((n) => n + 1);
+      } else if (e.key === 'F5' || e.key === ' ') {
+        e.preventDefault();
+        if (el.tagName === 'BUTTON') el.blur();
         player.toggle();
-      } else if (e.key === 'ArrowRight') player.stepForward();
-      else if (e.key === 'ArrowLeft') player.stepBack();
+      } else if ((e.key === 'F10' && !e.shiftKey) || e.key === 'ArrowRight') {
+        e.preventDefault();
+        player.stepForward();
+      } else if ((e.key === 'F10' && e.shiftKey) || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        player.stepBack();
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -114,198 +137,265 @@ export default function App() {
 
   const select = useCallback((s: Scenario, variant?: string) => {
     setSel({ sc: s, v: variant ?? s.variants?.[0]?.id ?? '' });
-    setMore(false);
   }, []);
 
   const { Panel, BottomPanel } = sc;
   const canEdit = snap.atHead && (frame.editable?.length ?? 0) > 0;
   const variantInfo = sc.variants?.find((x) => x.id === v);
   const input = sc.input?.(session);
-  const group = GROUPS.find((g) => g.nums.includes(sc.num));
+  const file = fileName(sc);
+  const graph = session.built.graph;
+  const breakpoints = [
+    ...(graph.interruptBefore ?? []).map((n) => ({ label: `interrupt_before=["${n}"]`, where: n })),
+    ...(graph.interruptAfter ?? []).map((n) => ({ label: `interrupt_after=["${n}"]`, where: n })),
+    ...(session.built.options?.breakAtRouters ?? []).map((r) => ({ label: `${r}() 실행 직전`, where: r })),
+    ...(session.built.code.includes('interrupt(') && !graph.interruptBefore ? [{ label: 'interrupt() 호출 지점', where: 'interrupt' }] : []),
+  ];
 
   return (
-    <div className={`app ${sc.stateView === 'compare' ? 'wide-inspector' : ''}`}>
-      <nav className="sidebar" aria-label="챕터">
-        <div className="wordmark">
-          <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-            <circle cx="4" cy="4" r="2.6" className="wm-dot" />
-            <circle cx="14" cy="9" r="2.6" className="wm-ring" />
-            <circle cx="4" cy="14" r="2.6" className="wm-ring" />
-            <path d="M6.3 5.2 11.8 8M11.8 10 6.3 12.8" className="wm-line" />
-          </svg>
-          <span>
-            LangGraph<span className="wm-light"> Visualizer</span>
-          </span>
-        </div>
-
-        <div className="chapters">
-          {GROUPS.map((g) => (
-            <div key={g.title} className="chapter-group">
-              <div className="eyebrow">{g.title}</div>
-              {g.nums.map((num) => {
-                const s = SCENARIOS.find((x) => x.num === num)!;
-                return (
-                  <button key={s.id} className={`chapter ${s.id === sc.id ? 'on' : ''}`} onClick={() => select(s)}>
-                    <span className="chapter-num">{String(s.num).padStart(2, '0')}</span>
-                    <span className="chapter-title">{s.title}</span>
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-
-        <div className="sidebar-foot">
-          <div className="keys">
-            <span>
-              <kbd>Space</kbd> 재생
-            </span>
-            <span>
-              <kbd>←</kbd>
-              <kbd>→</kbd> 스텝
-            </span>
-          </div>
-          <button className="icon-btn" onClick={toggleTheme} title="테마 전환" aria-label="테마 전환">
-            {theme === 'dark' ? <Sun size={15} strokeWidth={1.75} /> : <Moon size={15} strokeWidth={1.75} />}
-          </button>
-        </div>
+    <div className={`workbench ${explorer ? '' : 'no-explorer'}`}>
+      <nav className="activitybar" aria-label="활동 표시줄">
+        <button className={`ab-item ${explorer ? 'on' : ''}`} onClick={() => setExplorer((x) => !x)} title="탐색기" aria-label="탐색기">
+          <i className="codicon codicon-files" />
+        </button>
+        <div className="ab-spacer" />
+        <button className="ab-item" onClick={toggleTheme} title={theme === 'dark' ? '밝은 테마로' : '어두운 테마로'} aria-label="색 테마 전환">
+          <i className="codicon codicon-color-mode" />
+        </button>
       </nav>
 
-      <main className="stage">
-        <header className="chapter-head">
-          <div className="eyebrow">
-            Chapter {String(sc.num).padStart(2, '0')} · {group?.title}
-          </div>
-          <h1>{sc.title}</h1>
-          <p className="lede">
-            {sc.intro[0]}{' '}
-            <button className="link" onClick={() => setMore((x) => !x)}>
-              {more ? '접기' : '더 읽기'}
-            </button>
-          </p>
-          {more && (
-            <div className="more">
-              {sc.intro.slice(1).map((p, i) => (
+      {explorer && (
+        <aside className="sidebar explorer">
+          <div className="sidebar-title">탐색기</div>
+          <Pane title="langgraph-tutorial" grow>
+            {FOLDERS.map((f) => (
+              <div key={f.name}>
+                <div className="tree-row folder" style={{ paddingLeft: 8 }}>
+                  <span className="twistie">
+                    <i className="codicon codicon-chevron-down" />
+                  </span>
+                  <span>{f.name}</span>
+                </div>
+                {f.nums.map((num) => {
+                  const s = SCENARIOS.find((x) => x.num === num)!;
+                  return (
+                    <button key={s.id} className={`tree-row file ${s.id === sc.id ? 'selected' : ''}`} style={{ paddingLeft: 28 }} onClick={() => select(s)} title={s.title}>
+                      <i className="codicon codicon-file-code py-icon" aria-hidden="true" />
+                      <span className="file-name">{fileName(s)}</span>
+                      <span className="file-desc">{s.short}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </Pane>
+          <Pane title={`개요: ${sc.short}`}>
+            <div className="readme">
+              <h3>{sc.title}</h3>
+              {sc.intro.map((p, i) => (
                 <p key={i}>{p}</p>
               ))}
-              <div className="watch">
-                <div className="eyebrow">관찰 포인트</div>
-                <ol>
-                  {sc.watch.map((w, i) => (
-                    <li key={i}>{w}</li>
-                  ))}
-                </ol>
-              </div>
+              <h4>관찰 포인트</h4>
+              <ul>
+                {sc.watch.map((w, i) => (
+                  <li key={i}>{w}</li>
+                ))}
+              </ul>
             </div>
-          )}
-          {sc.variants && (
-            <div className="variant-tabs" role="tablist">
-              {sc.variants.map((x) => (
-                <button
-                  key={x.id}
-                  role="tab"
-                  aria-selected={x.id === v}
-                  className={x.id === v ? 'on' : ''}
-                  onClick={() => select(sc, x.id)}
-                  title={x.description}
-                >
-                  {x.label}
-                </button>
-              ))}
-              {variantInfo && <span className="variant-desc">{variantInfo.description}</span>}
-            </div>
-          )}
-        </header>
+          </Pane>
+        </aside>
+      )}
 
-        <section className="canvas">
-          <div className="hud">
-            <div className="hud-step">
-              <span className="eyebrow">Super-step</span>
-              <span className="hud-num">{frame.superstep === null ? '—' : frame.superstep}</span>
-              {frame.sub?.superstep !== undefined && frame.sub.superstep !== null && (
-                <span className="hud-sub">sub {frame.sub.superstep}</span>
-              )}
-            </div>
-            <div className="hud-meta">
-              <span className={`hud-phase phase-${frame.phase}`}>{phaseLabel(frame.phase)}</span>
-              {frame.threadId !== null && <span className="hud-thread">thread_id = {frame.threadId}</span>}
+      <main className="editor-area">
+        <div className="editor-group">
+          <div className="tabs">
+            <div className="tab active">
+              <i className="codicon codicon-type-hierarchy-sub" />
+              <span className="tab-label">Graph: {file}</span>
             </div>
           </div>
-          <div className="legend" aria-label="범례">
-            <span><i className="sw sw-read" />읽기</span>
-            <span><i className="sw sw-write" />쓰기</span>
-            <span><i className="sw sw-trigger" />실행 신호</span>
-            <span><i className="sw sw-send" />Send</span>
-            <span><i className="sw-line" />엣지</span>
-            <span><i className="sw-line dashed" />조건부</span>
+          <div className="breadcrumbs">
+            <span>langgraph-tutorial</span>
+            <i className="codicon codicon-chevron-right" />
+            <span>{file}</span>
+            <i className="codicon codicon-chevron-right" />
+            <span>graph</span>
+            {frame.superstep !== null && (
+              <>
+                <i className="codicon codicon-chevron-right" />
+                <span>super-step {frame.superstep}</span>
+                {frame.sub?.superstep != null && (
+                  <>
+                    <i className="codicon codicon-chevron-right" />
+                    <span>
+                      {frame.sub.nodeId} › step {frame.sub.superstep}
+                    </span>
+                  </>
+                )}
+              </>
+            )}
           </div>
-          <GraphView built={session.built} frame={frame} interval={player.interval} />
-        </section>
-
-        <div className={`caption phase-${frame.phase}`} aria-live="polite">
-          <div className="caption-title">{frame.title}</div>
-          {frame.detail && <div className="caption-detail">{frame.detail}</div>}
+          <div className="graph-canvas">
+            <div className="graph-stage">
+              <DebugToolbar snap={snap} onPlay={player.toggle} onStep={player.stepForward} onBack={player.stepBack} onReset={() => setNonce((n) => n + 1)} />
+              <GraphView built={session.built} frame={frame} interval={player.interval} />
+            </div>
+            <Hover frame={frame} />
+          </div>
         </div>
 
-        {BottomPanel && (
-          <div className="bottom-panel">
-            <BottomPanel session={session} snap={snap} frame={frame} />
-          </div>
-        )}
-
-        <section className="dock">
-          <div className="dock-tabs" role="tablist">
-            <button role="tab" aria-selected={dock === 'code'} className={dock === 'code' ? 'on' : ''} onClick={() => setDock('code')}>
-              코드
+        <section className="panel-area">
+          <div className="panel-tabs" role="tablist">
+            <button role="tab" aria-selected={panel === 'code'} className={panel === 'code' ? 'on' : ''} onClick={() => setPanel('code')}>
+              {file}
             </button>
-            <button role="tab" aria-selected={dock === 'log'} className={dock === 'log' ? 'on' : ''} onClick={() => setDock('log')}>
-              실행 로그 <span className="count">{snap.frames.length}</span>
+            <button role="tab" aria-selected={panel === 'console'} className={panel === 'console' ? 'on' : ''} onClick={() => setPanel('console')}>
+              디버그 콘솔
             </button>
-            <span className="dock-hint">{dock === 'code' ? 'python · 지금 실행 중인 줄 표시' : '항목을 누르면 그 시점으로 이동'}</span>
+            {BottomPanel && (
+              <button role="tab" aria-selected={panel === 'output'} className={panel === 'output' ? 'on' : ''} onClick={() => setPanel('output')}>
+                출력 (stream)
+              </button>
+            )}
           </div>
-          {dock === 'code' ? (
-            <CodePanel code={session.built.code} active={frame.code} />
-          ) : (
-            <EventLog frames={snap.frames} index={snap.index} onSeek={player.seek} />
-          )}
+          <div className="panel-body">
+            {panel === 'code' && <CodePanel code={session.built.code} active={frame.code} />}
+            {panel === 'console' && <EventLog frames={snap.frames} index={snap.index} onSeek={player.seek} />}
+            {panel === 'output' && BottomPanel && <BottomPanel session={session} snap={snap} frame={frame} />}
+          </div>
+          <StepSlider snap={snap} onSeek={player.seek} />
         </section>
       </main>
 
-      <aside className="inspector">
-        {sc.stateView === 'compare' ? (
-          <CompareView frame={frame} channels={session.built.graph.channels} />
-        ) : (
-          <StatePanel
-            frame={frame}
-            channels={session.built.graph.channels}
-            canEdit={canEdit}
-            onEdit={(patch) => {
-              session.runtime.queuePatch(patch);
-              player.stepForward();
-            }}
-          />
-        )}
-        {Panel && <Panel session={session} snap={snap} frame={frame} />}
-        {input && (
-          <section className="panel">
-            <header className="panel-head">
-              <h2>입력</h2>
-            </header>
-            <pre className="input-preview">graph.invoke({pyRepr(input)})</pre>
-            <p className="note">재생하면 이 입력으로 실행합니다.</p>
-          </section>
-        )}
+      <aside className="sidebar debug">
+        <div className="sidebar-title">
+          실행 및 디버그
+          <div className="launch">
+            <button className="launch-run" onClick={player.toggle} title="실행 (F5)" aria-label="실행">
+              <i className="codicon codicon-debug-start" />
+            </button>
+            {sc.variants ? (
+              <select value={v} onChange={(e) => select(sc, e.target.value)} aria-label="실행 구성" title={variantInfo?.description}>
+                {sc.variants.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.label}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="launch-name">{sc.short}</span>
+            )}
+          </div>
+        </div>
+        <div className="sidebar-scroll">
+          <Pane title="변수">
+            {sc.stateView === 'compare' ? (
+              <CompareView frame={frame} channels={graph.channels} />
+            ) : (
+              <StatePanel
+                frame={frame}
+                channels={graph.channels}
+                canEdit={canEdit}
+                onEdit={(patch) => {
+                  session.runtime.queuePatch(patch);
+                  player.stepForward();
+                }}
+              />
+            )}
+          </Pane>
+          <Pane title="호출 스택 (super-step)">
+            <CallStack frame={frame} code={session.built.code} file={file} />
+          </Pane>
+          {breakpoints.length > 0 && (
+            <Pane title="중단점">
+              {breakpoints.map((b) => (
+                <div key={b.label} className="tree-row bp-row" style={{ paddingLeft: 12 }}>
+                  <input type="checkbox" checked readOnly aria-label={b.label} />
+                  <i className="codicon codicon-circle-filled bp-icon" />
+                  <span>{b.label}</span>
+                  <span className="v-hint">{file}</span>
+                </div>
+              ))}
+            </Pane>
+          )}
+          {Panel && (
+            <Pane title="실험">
+              <Panel session={session} snap={snap} frame={frame} />
+            </Pane>
+          )}
+          {input && (
+            <Pane title="실행 입력 (launch.json)" defaultOpen={false}>
+              <pre className="launch-input">graph.invoke({pyRepr(input)})</pre>
+            </Pane>
+          )}
+        </div>
       </aside>
 
-      <Transport
+      <StatusBar
         snap={snap}
-        onPlay={player.toggle}
-        onStep={player.stepForward}
-        onBack={player.stepBack}
-        onReset={() => setNonce((n) => n + 1)}
-        onSpeed={player.setSpeed}
-        onSeek={player.seek}
+        frame={frame}
+        file={file}
+        variant={variantInfo?.label}
+        onSpeed={() => player.setSpeed(SPEEDS[(SPEEDS.indexOf(snap.speed) + 1) % SPEEDS.length])}
       />
+    </div>
+  );
+}
+
+/** 지금 일어나는 일을 설명하는 에디터 호버 위젯 */
+function Hover({ frame }: { frame: Frame }) {
+  return (
+    <div className={`hover-widget phase-${frame.phase}`} aria-live="polite">
+      <div className="hover-head">
+        <span className="hover-phase">{phaseLabel(frame.phase)}</span>
+        {frame.superstep !== null && <span className="hover-step">super-step {frame.superstep}</span>}
+      </div>
+      <div className="hover-title">{frame.title}</div>
+      {frame.detail && <div className="hover-detail">{frame.detail}</div>}
+    </div>
+  );
+}
+
+/** super-step 을 스레드처럼, 그 안에서 실행된 노드를 스택 프레임처럼 보여준다 */
+function CallStack({ frame, code, file }: { frame: Frame; code: string; file: string }) {
+  const steps = new Map<number, string[]>();
+  for (const [node, ss] of Object.entries(frame.nodeRuns)) for (const s of ss) steps.set(s, [...(steps.get(s) ?? []), node]);
+  const cur = frame.superstep;
+  const live = frame.tasks.map((t) => t.node).filter((n) => n !== START && n !== END);
+  if (cur !== null && live.length && !steps.has(cur)) steps.set(cur, live.filter((n) => !n.includes('/')));
+  if (cur !== null && frame.sub && !steps.get(cur)?.length) steps.set(cur, [frame.sub.nodeId]);
+  const rows = [...steps.entries()].sort((a, b) => b[0] - a[0]);
+  if (!rows.length) return <div className="empty-view">실행하면 super-step 별로 실행된 노드가 쌓입니다.</div>;
+  const state = frame.phase === 'interrupt' ? 'INTERRUPT 에서 일시 중지됨' : frame.phase === 'error' ? '예외로 중지됨' : frame.phase === 'end' ? '완료됨' : '스텝에서 일시 중지됨';
+  return (
+    <div>
+      {rows.map(([s, nodes]) => (
+        <div key={s}>
+          <div className={`tree-row thread ${s === cur ? 'current' : ''}`} style={{ paddingLeft: 8 }}>
+            <span className="twistie">
+              <i className="codicon codicon-chevron-down" />
+            </span>
+            <span>super-step {s}</span>
+            {s === cur && <span className="state-label">{state}</span>}
+          </div>
+          {[...new Set(nodes)].sort().map((n) => {
+            const count = nodes.filter((x) => x === n).length;
+            const line = firstLineOf(code, n);
+            return (
+              <div key={n} className={`tree-row stack-frame ${s === cur ? 'top' : ''}`} style={{ paddingLeft: 30 }}>
+                <span className="sf-name">
+                  {n}
+                  {count > 1 ? ` ×${count}` : ''}
+                </span>
+                <span className="v-hint">
+                  {file}
+                  {line ? ` ${line}` : ''}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 }

@@ -166,7 +166,7 @@ export const s11: Scenario = {
     '"values" 는 super-step 이 끝날 때마다 전체 state 를, "updates" 는 노드가 반환한 update 만 {노드 이름: update} 형태로 내보냅니다.',
   ],
   watch: [
-    '아래 두 콘솔에 chunk 가 쌓이는 타이밍 (새 chunk 는 초록색)',
+    '아래 두 콘솔에 chunk 가 쌓이는 타이밍 (새 chunk 는 파랗게 표시)',
     'values 의 첫 chunk 는 입력 그대로의 state (super-step 0)',
     '병렬 super-step 에서 updates 는 2개, values 는 1개',
   ],

@@ -147,7 +147,7 @@ function SendPanel({ session, frame }: PanelProps) {
         </table>
       )}
       <div className="callout info" style={{ marginTop: 8 }}>
-        router 직전에서 자동으로 멈춥니다. 위 State 패널에서 <b>subjects</b> 를 쉼표로 늘리거나 줄여 보세요 — Send 개수, 즉 병렬로
+        router 직전에서 자동으로 멈춥니다. 위 변수 창에서 <b>subjects</b> 를 쉼표로 늘리거나 줄여 보세요 — Send 개수, 즉 병렬로
         실행되는 write_joke 인스턴스 수가 바뀝니다.
       </div>
     </section>
@@ -164,7 +164,7 @@ export const s09: Scenario = {
     '각 Send 태스크는 공유 state 대신 자신만의 arg 를 입력으로 받고, 결과는 reducer(operator.add)로 공유 state 에 모입니다.',
   ],
   watch: [
-    '분홍 Send 패킷이 각자 다른 {"subject": ...} 를 싣고 write_joke 로 이동',
+    '보라색 Send 점이 각자 다른 {"subject": ...} 를 싣고 write_joke 로 이동',
     'write_joke 아래 인스턴스 칩 ×N — 모두 같은 super-step 에서 실행',
     '주제 수를 바꾸면 Send 개수가 달라짐 (동물 4 / 회사생활 3 / 음식 2)',
   ],
@@ -182,7 +182,7 @@ export const s09: Scenario = {
         write_joke: { x: 580, y: 120 },
         pick_best: { x: 770, y: 120 },
         [END]: { x: 905, y: 120 },
-        [HUB]: { x: 250, y: 360 },
+        [HUB]: { x: 300, y: 310 },
       },
       reserve: [{ x: 580, y: 250 }],
     },

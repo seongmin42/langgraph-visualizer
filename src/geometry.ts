@@ -36,8 +36,8 @@ export interface VEdge {
   segs: Seg[];
 }
 
-export const HUB_ROW = 21;
-export const HUB_HEAD = 30;
+export const HUB_ROW = 20;
+export const HUB_HEAD = 40;
 
 export function hubSize(channels: ChannelSpec[]) {
   const visible = channels.filter((c) => !c.hidden);
@@ -59,8 +59,8 @@ export function buildScene(graph: GraphSpec, layout: Layout, prefix = ''): { nod
     nodes.push({ id: P(id), label, kind, x: p.x, y: p.y, w: p.w ?? w, h: p.h ?? h, ...extra });
   };
 
-  add(START, 'START', 'start', 18, 18);
-  if (layout.nodes[P(END)]) add(END, 'END', 'end', 22, 22);
+  add(START, '__start__', 'start', 92, 34);
+  if (layout.nodes[P(END)]) add(END, '__end__', 'end', 84, 34);
   const hub = hubSize(graph.channels);
   add(HUB, 'State', 'hub', hub.w, hub.h, { channels: graph.channels });
 
@@ -78,7 +78,7 @@ export function buildScene(graph: GraphSpec, layout: Layout, prefix = ''): { nod
   }
   for (const ce of graph.conditionalEdges ?? []) {
     const rid = routerId(ce.routerName);
-    if (!nodes.some((v) => v.id === P(rid))) add(rid, ce.routerName, 'router', 26, 26);
+    if (!nodes.some((v) => v.id === P(rid))) add(rid, ce.routerName, 'router', 30, 30);
   }
 
   const find = (id: string) => nodes.find((v) => v.id === P(id))!;

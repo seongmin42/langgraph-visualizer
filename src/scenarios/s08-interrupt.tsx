@@ -263,7 +263,7 @@ export const s08: Scenario = {
     '두 가지 방식이 있습니다: ① 노드 안에서 interrupt(value) 를 호출하고 Command(resume=...) 로 재개하는 동적 방식(권장), ② compile(interrupt_before=[...]) 로 특정 노드 직전에 멈추는 정적 breakpoint.',
   ],
   watch: [
-    '형광펜으로 표시되며 멈춘 노드와, 오른쪽에 나타나는 승인/수정/반려 버튼',
+    '노란 현재 프레임 화살표와 함께 멈춘 노드, 오른쪽 실험 창의 승인/수정/반려 버튼',
     '동적 방식: 재개 시 human_review 가 "처음부터" 다시 실행되고 interrupt() 가 resume 값을 반환',
     '반려하면 Command(goto="write_email") 로 되돌아가 다시 검토를 요청',
   ],

@@ -2,21 +2,24 @@
 
 LangGraph 의 핵심 실행 모델을 **실제 LLM 호출 없이 mock 노드로** 한 단계씩 따라가며 공부하는 웹 앱입니다.
 
-- 왼쪽: 그래프 (노드 / 엣지 / router / 공유 State 허브, 데이터 패킷 애니메이션)
-- 오른쪽: 현재 State 패널 (바뀐 키 하이라이트, 이전 값 → 새 값 diff, 대기 중인 writes) + 시나리오별 실험 패널
-- 아래: 해당 시나리오의 LangGraph 파이썬 코드 (지금 실행 중인 부분 하이라이트) + 실행 로그
-- 아래 재생 바: 재생 / 일시정지 / 한 스텝 / 이전 스텝 / 속도 / 초기화, 그리고 super-step 눈금이 있는 스크러버(드래그로 이동)
-- 라이트/다크 테마 (시스템 설정을 따르고, 사이드바 아래에서 전환)
+- 가운데: 그래프 (노드 / 엣지 / router / 공유 State, state 를 읽고 쓰는 데이터 이동 애니메이션)
+- 오른쪽: 현재 State (변수 트리 — 바뀐 값 강조, 이전 값, 대기 중인 writes) / super-step 호출 스택 / 중단점 / 시나리오별 실험 창
+- 아래: 해당 시나리오의 LangGraph 파이썬 코드 (지금 실행 중인 줄 강조) + 디버그 콘솔(실행 기록)
+- 디버그 툴바(계속/한 스텝/이전 스텝/다시 시작), 코드 아래 단계 슬라이더(처음·이전·다음·마지막), 상태 표시줄에서 속도 변경
+- 라이트/다크 테마 (시스템 설정을 따르고, 왼쪽 활동 표시줄 아래에서 전환)
 
-### 디자인 원칙
+### 디자인 레퍼런스
 
-"인쇄된 기술 노트" 콘셉트로, 흔한 AI 생성 UI의 특징(네온 글로우, 보라/파랑 그라데이션, 카드 속 카드, 한쪽 색 줄 테두리, 이모지, 알약 배지 남발)을 피했습니다.
+"AI 가 만든 듯한" 임의의 스타일 대신, 학습자가 이미 익숙한 실제 도구의 모양과 값을 그대로 가져왔습니다.
 
-- 종이색 바탕 + 잉크색 글자 + 헤어라인 구분선. 카드와 그림자는 최소화
-- 강조색은 하나(버밀리언)만 쓰고, "지금 실행 중"인 것에만 사용
-- 바뀐 값은 형광펜, 값의 변화는 git diff 처럼 `−` / `+` 줄로 표시
-- 그래프는 도식 스타일: START 는 채운 원, END 는 이중 원(UML 상태도), router 는 마름모
-- Pretendard(본문) + IBM Plex Mono(코드·라벨·숫자)
+| 영역 | 레퍼런스 | 가져온 것 |
+|------|----------|-----------|
+| 화면 전체 | VS Code **실행 및 디버그** 뷰 | 탐색기 / 변수·호출 스택·중단점 창 / 떠 있는 디버그 툴바 / 디버깅 중 색이 바뀌는 상태 표시줄. 색은 VS Code `Light Modern`·`Dark Modern` 테마 파일과 `debugColors.ts` 의 값 (현재 프레임 노란 배경, 중단점 빨간 점, 변수 이름·문자열·숫자 색) |
+| 그래프 | LangGraph `graph.get_graph().draw_mermaid()` | `langchain_core` 의 `NodeStyles` (`#f2f0ff` 노드, 투명 `__start__`, `#bfb6fc` `__end__`), Mermaid 기본 테마 (`#9370DB` 테두리, `#333` 선, 점선 조건부 엣지, `#ffffde` 서브그래프 영역) |
+| 코드 | VS Code 편집기 | Shiki + VS Code `Light+`/`Dark+` TextMate 테마, 실행 중인 줄 노란 배경과 거터 화살표 |
+| 실행 기록 이동 | Python Tutor | 코드 아래 `<< 처음 < 이전 [슬라이더] 다음 > 마지막 >>`, "Step N of M" |
+
+아이콘은 VS Code 의 Codicons 를 씁니다.
 
 ## 실행
 
@@ -30,7 +33,7 @@ npm test         # 엔진 동작 테스트 (vitest)
 npm run build    # dist/ 에 정적 빌드 (base: './' 라서 GitHub Pages 등 어디에 올려도 동작)
 ```
 
-단축키: `Space` 재생/일시정지, `→` 한 스텝, `←` 이전 스텝. 스크러버를 드래그하거나 실행 로그 항목을 클릭하면 그 시점으로 이동합니다.
+단축키: VS Code 와 같이 `F5` 계속/일시정지, `F10` 한 스텝, `Shift+F10` 이전 스텝, `Ctrl+Shift+F5` 다시 시작 (`Space`, `→`, `←` 도 됩니다). 단계 슬라이더나 디버그 콘솔 항목으로 원하는 시점으로 이동합니다.
 URL 해시(`#/parallel/join` 등)로 시나리오와 변형을 바로 열 수 있습니다.
 
 ## 시나리오
@@ -59,7 +62,7 @@ src/
     types.ts      #   GraphSpec, Checkpoint, Frame, Send, Command ...
   player.ts       # Frame 버퍼 + 재생/일시정지/스텝/되감기
   geometry.ts     # 노드 배치 → SVG 엣지/패킷 경로 계산
-  components/     # GraphView, StatePanel, CodePanel, Transport(스크러버), Timeline, EventLog ...
+  components/     # GraphView, StatePanel(변수 트리), CodePanel, Debug(툴바·슬라이더·상태 표시줄), Timeline, EventLog ...
   scenarios/      # 시나리오 하나 = 그래프 정의 + 레이아웃 + 파이썬 코드 + (선택) 실험 패널
 ```
 

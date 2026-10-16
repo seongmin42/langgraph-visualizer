@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { loadHighlighter, tokenize } from '../highlight';
 
 interface Line {
   text: string;
@@ -31,62 +32,26 @@ export function parseCode(src: string): Line[] {
   return out;
 }
 
-const KW = new Set(
-  'def class return if elif else for in while import from as with not and or is lambda yield try except raise pass None True False async await'.split(' '),
-);
-const BUILTIN = new Set('len list dict str int float print next range isinstance any all sum max min sorted enumerate'.split(' '));
-
-type Tok = { t: string; c?: string };
-
-function tokenize(line: string): Tok[] {
-  const toks: Tok[] = [];
-  let i = 0;
-  let prevWord = '';
-  while (i < line.length) {
-    const rest = line.slice(i);
-    let m: RegExpMatchArray | null;
-    if (rest[0] === '#') {
-      toks.push({ t: rest, c: 'tk-com' });
-      break;
-    }
-    if ((m = rest.match(/^[fr]?("""|'''|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/))) {
-      toks.push({ t: m[0], c: 'tk-str' });
-      i += m[0].length;
-      continue;
-    }
-    if ((m = rest.match(/^@\w+/))) {
-      toks.push({ t: m[0], c: 'tk-dec' });
-      i += m[0].length;
-      continue;
-    }
-    if ((m = rest.match(/^\d+(\.\d+)?/))) {
-      toks.push({ t: m[0], c: 'tk-num' });
-      i += m[0].length;
-      continue;
-    }
-    if ((m = rest.match(/^[A-Za-z_]\w*/))) {
-      const w = m[0];
-      const after = line.slice(i + w.length);
-      let c: string | undefined;
-      if (KW.has(w)) c = 'tk-kw';
-      else if (prevWord === 'def' || prevWord === 'class') c = 'tk-def';
-      else if (BUILTIN.has(w)) c = 'tk-bi';
-      else if (/^[A-Z]/.test(w)) c = 'tk-cls';
-      else if (/^\s*\(/.test(after)) c = 'tk-call';
-      toks.push({ t: w, c });
-      prevWord = w;
-      i += w.length;
-      continue;
-    }
-    toks.push({ t: rest[0] });
-    i += 1;
-  }
-  return toks;
+/** 태그가 처음 등장하는 줄 번호(1부터) — 콜 스택의 `파일:줄` 표시에 쓴다 */
+export function firstLineOf(code: string, tag: string): number | null {
+  const i = parseCode(code).findIndex((l) => l.tags.includes(tag));
+  return i < 0 ? null : i + 1;
 }
+
+const ROW = 19;
 
 export function CodePanel({ code, active }: { code: string; active: string[] }) {
   const lines = useMemo(() => parseCode(code), [code]);
-  const tokenized = useMemo(() => lines.map((l) => tokenize(l.text)), [lines]);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    loadHighlighter().then(() => alive && setReady(true));
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const tokens = useMemo(() => (ready ? tokenize(lines.map((l) => l.text).join('\n')) : null), [ready, lines]);
+
   const box = useRef<HTMLDivElement>(null);
   const hl = lines.map((l) => l.tags.some((t) => active.includes(t)));
   const first = hl.indexOf(true);
@@ -95,9 +60,8 @@ export function CodePanel({ code, active }: { code: string; active: string[] }) 
   useEffect(() => {
     const el = box.current;
     if (!el || first < 0) return;
-    const rowH = 19;
-    const top = first * rowH;
-    const bottom = (last + 1) * rowH;
+    const top = first * ROW;
+    const bottom = (last + 1) * ROW;
     const view = el.clientHeight;
     if (top < el.scrollTop + 8 || bottom > el.scrollTop + view - 8) {
       const target = bottom - top < view - 40 ? top - (view - (bottom - top)) / 2 : top - 20;
@@ -108,19 +72,18 @@ export function CodePanel({ code, active }: { code: string; active: string[] }) 
   return (
     <div className="code" ref={box}>
       <pre>
-        {tokenized.map((toks, i) => (
-          <div key={i} className={`code-line ${hl[i] ? 'hl' : ''}`}>
+        {lines.map((l, i) => (
+          <div key={i} className={`code-line ${hl[i] ? 'hl' : ''} ${i === first ? 'hl-first' : ''}`}>
+            <span className="glyph">{i === first && <i className="codicon codicon-debug-stackframe" />}</span>
             <span className="ln">{i + 1}</span>
             <span className="lc">
-              {toks.map((t, j) =>
-                t.c ? (
-                  <span key={j} className={t.c}>
-                    {t.t}
-                  </span>
-                ) : (
-                  t.t
-                ),
-              )}
+              {tokens?.[i]
+                ? tokens[i].map((t, j) => (
+                    <span key={j} style={t.htmlStyle as React.CSSProperties}>
+                      {t.content}
+                    </span>
+                  ))
+                : l.text}
               {'\n'}
             </span>
           </div>

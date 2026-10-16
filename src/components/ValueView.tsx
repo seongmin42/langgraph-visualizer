@@ -1,127 +1,142 @@
+import { useState, type ReactNode } from 'react';
 import { isMessage, pyRepr } from '../engine/pyrepr';
 import type { DiffEntry, Message } from '../engine/types';
 
-const ROLE: Record<Message['type'], string> = { human: 'human', ai: 'ai', system: 'system', tool: 'tool' };
+/** VS Code Variables 뷰처럼 값의 타입에 따라 색을 다르게 */
+export function Val({ v, max = 120 }: { v: unknown; max?: number }) {
+  if (v === undefined) return <span className="v-undef">&lt;설정되지 않음&gt;</span>;
+  const cls =
+    typeof v === 'string'
+      ? 'v-string'
+      : typeof v === 'number'
+        ? 'v-number'
+        : typeof v === 'boolean' || v === null
+          ? 'v-boolean'
+          : 'v-value';
+  return <span className={cls}>{pyRepr(v, max)}</span>;
+}
 
-type Mark = 'new' | 'replaced' | 'dup';
-const GUTTER: Record<Mark, string> = { new: '+', replaced: '~', dup: '!' };
+const MSG_CLASS: Record<Message['type'], string> = { human: 'HumanMessage', ai: 'AIMessage', system: 'SystemMessage', tool: 'ToolMessage' };
 
-/** 메시지 한 줄: 대화 로그처럼 역할 / id / 내용 */
-export function MessageRow({ m, mark, was }: { m: Message; mark?: Mark; was?: string }) {
+export function MsgVal({ m }: { m: Message }) {
   return (
-    <div className={`msg ${mark ? `msg-${mark}` : ''}`}>
-      <span className="msg-gutter">{mark ? GUTTER[mark] : ''}</span>
-      <span className={`msg-role role-${m.type}`}>{ROLE[m.type]}</span>
-      <span className="msg-body">
-        {was !== undefined && <span className="msg-was">{was}</span>}
-        {m.content}
-      </span>
-      <span className="msg-id">#{m.id}</span>
-      {mark === 'dup' && <span className="msg-note">id 중복</span>}
-      {mark === 'replaced' && <span className="msg-note">교체</span>}
+    <span className="v-value">
+      <span className="v-type">{MSG_CLASS[m.type]}</span>(<span className="v-string">{pyRepr(m.content)}</span>, id=
+      <span className="v-string">'{m.id}'</span>)
+    </span>
+  );
+}
+
+interface RowProps {
+  depth: number;
+  name: ReactNode;
+  value?: ReactNode;
+  hint?: ReactNode;
+  mark?: 'changed' | 'added' | 'removed' | 'manual';
+  open?: boolean;
+  onToggle?: () => void;
+  title?: string;
+}
+
+/** 트리 한 줄: 들여쓰기 + 펼침 화살표 + 이름: 값 */
+export function TreeRow({ depth, name, value, hint, mark, open, onToggle, title }: RowProps) {
+  return (
+    <div
+      className={`tree-row ${mark ? `mark-${mark}` : ''} ${onToggle ? 'expandable' : ''}`}
+      style={{ paddingLeft: 8 + depth * 12 }}
+      onClick={onToggle}
+      title={title}
+    >
+      <span className="twistie">{onToggle && <i className={`codicon codicon-chevron-${open ? 'down' : 'right'}`} />}</span>
+      <span className="v-name">{name}</span>
+      {value !== undefined && <span className="v-sep">: </span>}
+      {value !== undefined && <span className="v-val">{value}</span>}
+      {hint && <span className="v-hint">{hint}</span>}
     </div>
   );
 }
 
-export function ValueView({ v }: { v: unknown }) {
-  if (v === undefined) return <span className="v-unset">설정되지 않음</span>;
-  if (Array.isArray(v)) {
-    if (v.length === 0) return <span className="v-mono">[]</span>;
-    if (v.every(isMessage)) {
-      return (
-        <div className="v-msgs">
-          {(v as Message[]).map((m, i) => (
-            <MessageRow key={`${m.id}-${i}`} m={m} />
-          ))}
-        </div>
-      );
-    }
-    if (v.every((x) => typeof x === 'string' || typeof x === 'number')) {
-      return (
-        <ol className="v-list">
-          {v.map((x, i) => (
-            <li key={i}>
-              <span className="v-idx">{i}</span>
-              {pyRepr(x)}
-            </li>
-          ))}
-        </ol>
-      );
-    }
-  }
-  if (typeof v === 'string') return <span className="v-str">{pyRepr(v)}</span>;
-  return <span className="v-mono">{pyRepr(v)}</span>;
+function childrenOf(v: unknown): unknown[] | null {
+  return Array.isArray(v) && v.length > 0 ? v : null;
 }
 
-/** 이전 값 → 새 값. git diff 처럼 - / + 줄로 보여준다. reducer 종류에 따라 표현이 다르다 */
-export function DiffView({ d }: { d: DiffEntry }) {
-  const before = d.before;
-  const after = d.after;
-
-  if (d.reducer === 'add_messages' && Array.isArray(after)) {
-    const old = (Array.isArray(before) ? before : []) as Message[];
-    return (
-      <div className="v-msgs">
-        {(after as Message[]).map((m, i) => {
-          const prev = old.find((o) => o.id === m.id);
-          const mark: Mark | undefined = !prev ? 'new' : prev.content !== m.content ? 'replaced' : undefined;
-          return <MessageRow key={`${m.id}-${i}`} m={m} mark={mark} was={mark === 'replaced' ? prev!.content : undefined} />;
-        })}
-      </div>
-    );
-  }
-
-  if (d.reducer === 'add' && Array.isArray(after)) {
-    const n = Array.isArray(before) ? before.length : 0;
-    if (after.every(isMessage)) {
-      const seen = new Set<string>();
-      return (
-        <div className="v-msgs">
-          {(after as Message[]).map((m, i) => {
-            const dup = seen.has(m.id);
-            seen.add(m.id);
-            return <MessageRow key={i} m={m} mark={i >= n ? (dup ? 'dup' : 'new') : undefined} />;
-          })}
-        </div>
+/** 값이 리스트면 펼쳐서 원소를 보여준다 */
+export function VarNode({
+  depth,
+  name,
+  value,
+  hint,
+  mark,
+  diff,
+  title,
+}: {
+  depth: number;
+  name: ReactNode;
+  value: unknown;
+  hint?: ReactNode;
+  mark?: RowProps['mark'];
+  diff?: DiffEntry;
+  title?: string;
+}) {
+  const kids = childrenOf(value);
+  const [open, setOpen] = useState(true);
+  const summary = kids ? <span className="v-value">{kids.every(isMessage) ? `list[${kids.length}]` : `len() = ${kids.length}`}</span> : <Val v={value} />;
+  const rows: ReactNode[] = [];
+  if (kids && open) {
+    const before = diff && Array.isArray(diff.before) ? (diff.before as unknown[]) : [];
+    const seen = new Set<string>();
+    kids.forEach((k, i) => {
+      let m: RowProps['mark'];
+      let extra: ReactNode = null;
+      if (diff && isMessage(k)) {
+        const prev = (before as Message[]).find((p) => isMessage(p) && p.id === k.id);
+        if (diff.reducer === 'add_messages') {
+          if (!prev) m = 'added';
+          else if (prev.content !== k.content) {
+            m = 'changed';
+            extra = <TreeRow key={`was-${i}`} depth={depth + 2} name="이전" value={<span className="v-old">{pyRepr(prev.content)}</span>} />;
+          }
+        } else if (diff.reducer === 'add' && i >= before.length) {
+          m = seen.has(k.id) ? 'removed' : 'added';
+        }
+        seen.add(k.id);
+      } else if (diff && diff.reducer === 'add' && i >= before.length) {
+        m = 'added';
+      } else if (diff?.reducer === 'overwrite') {
+        m = undefined;
+      }
+      if (isMessage(k)) seen.add(k.id);
+      rows.push(
+        <TreeRow
+          key={i}
+          depth={depth + 1}
+          name={String(i)}
+          value={isMessage(k) ? <MsgVal m={k} /> : <Val v={k} />}
+          mark={m}
+          hint={m === 'removed' ? 'id 중복' : m === 'changed' ? 'id 같음 → 교체' : undefined}
+        />,
       );
-    }
-    return (
-      <ol className="v-list">
-        {after.map((x, i) => (
-          <li key={i} className={i >= n ? 'added' : ''}>
-            <span className="v-idx">{i >= n ? '+' : i}</span>
-            {pyRepr(x)}
-          </li>
-        ))}
-      </ol>
-    );
+      if (extra) rows.push(extra);
+    });
   }
-
+  const showOld = diff && (diff.reducer === 'overwrite' || diff.manual) && diff.before !== undefined;
   return (
-    <div className="diff">
-      <div className="diff-line del">
-        <span className="diff-sign">−</span>
-        <span>{before === undefined ? '설정되지 않음' : <DiffInline v={before} />}</span>
-      </div>
-      <div className="diff-line add">
-        <span className="diff-sign">+</span>
-        <span>
-          <DiffInline v={after} />
-        </span>
-      </div>
-    </div>
+    <>
+      <TreeRow depth={depth} name={name} value={summary} hint={hint} mark={mark} open={open} onToggle={kids ? () => setOpen((x) => !x) : undefined} title={title} />
+      {rows}
+      {showOld && (
+        <TreeRow
+          depth={depth + 1}
+          name="이전 값"
+          value={
+            <span className="v-old">
+              {Array.isArray(diff!.before) && (diff!.before as unknown[]).every(isMessage)
+                ? `[${(diff!.before as Message[]).map((m) => `${MSG_CLASS[m.type]}(id='${m.id}')`).join(', ')}]`
+                : pyRepr(diff!.before, 100)}
+            </span>
+          }
+        />
+      )}
+    </>
   );
-}
-
-function DiffInline({ v }: { v: unknown }) {
-  if (Array.isArray(v) && v.length && v.every(isMessage)) {
-    return (
-      <span className="v-msgs inline">
-        {(v as Message[]).map((m, i) => (
-          <MessageRow key={i} m={m} />
-        ))}
-      </span>
-    );
-  }
-  return <>{pyRepr(v)}</>;
 }

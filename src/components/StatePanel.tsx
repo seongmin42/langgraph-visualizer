@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { pyRepr } from '../engine/pyrepr';
 import type { ChannelSpec, DiffEntry, Frame, PendingWrite, ReducerKind, StateValues } from '../engine/types';
-import { DiffView, ValueView } from './ValueView';
+import { TreeRow, VarNode } from './ValueView';
 
 export const REDUCER_LABEL: Record<ReducerKind, string> = {
   overwrite: '덮어쓰기',
@@ -17,65 +17,75 @@ interface Props {
   onEdit: (patch: StateValues) => void;
 }
 
+/** VS Code 디버거의 VARIABLES 섹션: 스코프(State / Pending writes / Subgraph) 아래 변수 트리 */
 export function StatePanel({ frame, channels, canEdit, onEdit }: Props) {
   const editable = canEdit ? (frame.editable ?? []) : [];
-  const cp = frame.history.find((c) => c.id === frame.checkpointId);
+  const [open, setOpen] = useState({ state: true, pending: true, sub: true });
   return (
-    <section className="panel state-panel">
-      <header className="panel-head">
-        <h2>State</h2>
-        <span className="panel-meta">
-          {frame.threadId !== null && <>thread {frame.threadId}</>}
-          {cp && <> · checkpoint #{cp.seq}</>}
-          {frame.threadId === null && !cp && 'TypedDict'}
-        </span>
-      </header>
+    <div className="vars">
+      {frame.pendingWrites.length > 0 && (
+        <>
+          <TreeRow
+            depth={0}
+            name={<span className="scope">{frame.phase === 'error' ? 'Conflicting writes' : frame.phase === 'interrupt' ? 'pending_writes' : 'Pending writes'}</span>}
+            hint="super-step 끝에 반영"
+            open={open.pending}
+            onToggle={() => setOpen({ ...open, pending: !open.pending })}
+          />
+          {open.pending && <Pending writes={frame.pendingWrites} />}
+        </>
+      )}
 
-      {frame.pendingWrites.length > 0 && <PendingWrites writes={frame.pendingWrites} phase={frame.phase} />}
-
-      <ChannelRows channels={channels} state={frame.state} changed={frame.changedKeys} diff={frame.diff} editable={editable} onEdit={onEdit} />
+      <TreeRow
+        depth={0}
+        name={<span className="scope">State</span>}
+        hint="TypedDict"
+        open={open.state}
+        onToggle={() => setOpen({ ...open, state: !open.state })}
+      />
+      {open.state && (
+        <Channels channels={channels} state={frame.state} changed={frame.changedKeys} diff={frame.diff} editable={editable} onEdit={onEdit} />
+      )}
 
       {frame.sub && (
-        <div className="sub-state">
-          <div className="sub-head">
-            <span className="eyebrow">Subgraph · {frame.sub.nodeId}</span>
-            {frame.sub.superstep !== null && <span className="panel-meta">sub step {frame.sub.superstep}</span>}
-          </div>
-          {frame.sub.pendingWrites.length > 0 && <PendingWrites writes={frame.sub.pendingWrites} phase="write" />}
-          <ChannelRows
-            channels={frame.sub.channels}
-            state={frame.sub.state}
-            changed={frame.sub.changedKeys}
-            diff={frame.sub.diff}
-            editable={[]}
-            onEdit={() => {}}
+        <>
+          <TreeRow
+            depth={0}
+            name={<span className="scope">Subgraph: {frame.sub.nodeId}</span>}
+            hint={frame.sub.superstep !== null ? `sub step ${frame.sub.superstep}` : undefined}
+            open={open.sub}
+            onToggle={() => setOpen({ ...open, sub: !open.sub })}
           />
-        </div>
+          {open.sub && (
+            <>
+              {frame.sub.pendingWrites.length > 0 && <Pending writes={frame.sub.pendingWrites} />}
+              <Channels channels={frame.sub.channels} state={frame.sub.state} changed={frame.sub.changedKeys} diff={frame.sub.diff} editable={[]} onEdit={() => {}} />
+            </>
+          )}
+        </>
       )}
-    </section>
-  );
-}
-
-function PendingWrites({ writes, phase }: { writes: PendingWrite[]; phase: Frame['phase'] }) {
-  return (
-    <div className="pending">
-      <div className="eyebrow">
-        {phase === 'error' ? '충돌한 writes' : phase === 'interrupt' ? 'pending_writes 로 저장됨' : '대기 중인 writes · step 끝에 반영'}
-      </div>
-      {writes.map((w) => (
-        <div key={w.taskId} className="pending-row">
-          <span className="pending-node">{w.node}</span>
-          <span className="pending-val">
-            {pyRepr(w.update, 140)}
-            {w.goto && w.goto.length > 0 && <span className="muted"> goto={pyRepr(w.goto)}</span>}
-          </span>
-        </div>
-      ))}
     </div>
   );
 }
 
-export function ChannelRows({
+function Pending({ writes }: { writes: PendingWrite[] }) {
+  return (
+    <>
+      {writes.map((w) => (
+        <TreeRow
+          key={w.taskId}
+          depth={1}
+          name={w.node}
+          value={<span className="v-value">{pyRepr(w.update, 90)}</span>}
+          hint={w.goto && w.goto.length > 0 ? `goto=${pyRepr(w.goto)}` : undefined}
+          title={pyRepr(w.update)}
+        />
+      ))}
+    </>
+  );
+}
+
+export function Channels({
   channels,
   state,
   changed,
@@ -91,35 +101,30 @@ export function ChannelRows({
   onEdit: (patch: StateValues) => void;
 }) {
   return (
-    <dl className="ledger">
+    <>
       {channels.map((ch) => {
         const d = diff.find((x) => x.key === ch.key);
         const isChanged = changed.includes(ch.key);
         return (
-          <div key={ch.key} className={`ledger-row ${isChanged ? 'changed' : ''} ${d?.manual ? 'manual' : ''}`}>
-            <dt>
-              <span className="key">{ch.key}</span>
-              <span className="type">{ch.pyType}</span>
-              {ch.reducer !== 'overwrite' && <span className="reducer">{REDUCER_LABEL[ch.reducer]}</span>}
-              {isChanged && <span className="changed-mark">{d?.manual ? '직접 수정' : '변경'}</span>}
-            </dt>
-            <dd>
-              {isChanged && d ? <DiffView d={d} /> : <ValueView v={state[ch.key]} />}
-              {isChanged && d && d.writers.length > 0 && !d.manual && (
-                <div className="writers">
-                  {d.writers.length > 1 ? `${d.writers.length}개 writes: ` : 'from '}
-                  {d.writers.join(', ')}
-                </div>
-              )}
-              {editable.includes(ch.key) && <Editor value={state[ch.key]} onApply={(v) => onEdit({ [ch.key]: v })} />}
-            </dd>
+          <div key={ch.key}>
+            <VarNode
+              depth={1}
+              name={ch.key}
+              value={state[ch.key]}
+              diff={isChanged ? d : undefined}
+              mark={isChanged ? (d?.manual ? 'manual' : 'changed') : undefined}
+              hint={ch.reducer !== 'overwrite' ? REDUCER_LABEL[ch.reducer] : undefined}
+              title={`${ch.key}: ${ch.pyType}${isChanged && d && !d.manual ? `\nwrites: ${d.writers.join(', ')}` : ''}`}
+            />
+            {editable.includes(ch.key) && <Editor value={state[ch.key]} onApply={(v) => onEdit({ [ch.key]: v })} />}
           </div>
         );
       })}
-    </dl>
+    </>
   );
 }
 
+/** Variables 뷰의 "Set Value" 처럼 값을 직접 바꾸는 입력 */
 function Editor({ value, onApply }: { value: unknown; onApply: (v: unknown) => void }) {
   const kind =
     typeof value === 'number'
@@ -133,35 +138,29 @@ function Editor({ value, onApply }: { value: unknown; onApply: (v: unknown) => v
   const [text, setText] = useState(toText(value));
   useEffect(() => setText(toText(value)), [value]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const parse = (): unknown => {
-    if (kind === 'number') return Number(text);
-    if (kind === 'list') return text.split(',').map((s) => s.trim()).filter(Boolean);
-    if (kind === 'string') return text;
-    return JSON.parse(text);
+  const apply = () => {
+    try {
+      onApply(kind === 'number' ? Number(text) : kind === 'list' ? text.split(',').map((s) => s.trim()).filter(Boolean) : kind === 'string' ? text : JSON.parse(text));
+    } catch {
+      alert('값을 해석할 수 없습니다');
+    }
   };
 
   return (
-    <div className="editor">
-      <span className="eyebrow">값 바꿔보기</span>
-      <div className="editor-row">
-        {kind === 'number' ? (
-          <>
-            <input type="range" min={-1} max={1} step={0.05} value={Number(text)} onChange={(e) => setText(e.target.value)} />
-            <span className="editor-num">{Number(text).toFixed(2)}</span>
-          </>
-        ) : (
-          <input className="text-input" value={text} onChange={(e) => setText(e.target.value)} />
+    <div className="set-value">
+      <div className="set-value-label">Set Value — 값을 바꾸고 Enter (router 가 바뀐 값으로 판단)</div>
+      <div className="set-value-row">
+        {kind === 'number' && (
+          <input type="range" min={-1} max={1} step={0.05} value={Number(text)} onChange={(e) => setText(e.target.value)} aria-label="값" />
         )}
-        <button
-          className="btn btn-primary"
-          onClick={() => {
-            try {
-              onApply(parse());
-            } catch {
-              alert('값을 해석할 수 없습니다');
-            }
-          }}
-        >
+        <input
+          className="input"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && apply()}
+          aria-label="새 값"
+        />
+        <button className="button" onClick={apply}>
           적용
         </button>
       </div>
