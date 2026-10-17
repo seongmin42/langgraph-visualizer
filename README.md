@@ -33,6 +33,20 @@ npm test         # 엔진 동작 테스트 (vitest)
 npm run build    # dist/ 에 정적 빌드 (base: './' 라서 GitHub Pages 등 어디에 올려도 동작)
 ```
 
+### 배포 (Tailscale Funnel)
+
+빌드 결과는 정적 파일뿐이라 서버가 필요 없습니다. Tailscale Funnel 의 경로 마운트로 공개하면 같은 기기에서 돌고 있는 다른 앱(예: 5173 포트, `/` 경로)과 겹치지 않습니다.
+
+```bash
+./scripts/deploy-funnel.sh
+# → https://<기기>.<tailnet>.ts.net/langgraph/
+```
+
+- 기본은 `tailscaled` 가 빌드 폴더를 직접 서빙합니다 (포트를 쓰지 않음). 폴더를 읽을 수 없는 환경(macOS App Store 버전 등)에서는 `MODE=proxy PORT=4173 ./scripts/deploy-funnel.sh` 로 로컬 서버를 띄워 프록시합니다.
+- Funnel 은 마운트 경로(`/langgraph`)를 떼고 요청을 넘기므로, 상대 경로(`base: './'`)로 빌드된 이 앱은 하위 경로에서도 그대로 동작합니다.
+- 처음 쓰는 tailnet 이면 관리 콘솔에서 MagicDNS·HTTPS 인증서·Funnel 을 켜야 합니다 (`tailscale funnel` 이 안내 링크를 보여 줍니다).
+- 내리기: `tailscale funnel --set-path /langgraph off`. `tailscale funnel reset` 은 다른 앱의 설정까지 지우니 쓰지 마세요.
+
 단축키: VS Code 와 같이 `F5` 계속/일시정지, `F10` 한 스텝, `Shift+F10` 이전 스텝, `Ctrl+Shift+F5` 다시 시작 (`Space`, `→`, `←` 도 됩니다). 단계 슬라이더나 디버그 콘솔 항목으로 원하는 시점으로 이동합니다.
 URL 해시(`#/parallel/join` 등)로 시나리오와 변형을 바로 열 수 있습니다.
 
