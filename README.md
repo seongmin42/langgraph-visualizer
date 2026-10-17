@@ -42,10 +42,11 @@ npm run build    # dist/ 에 정적 빌드 (base: './' 라서 GitHub Pages 등 �
 # → https://<기기>.<tailnet>.ts.net/langgraph/
 ```
 
-- 기본은 `tailscaled` 가 빌드 폴더를 직접 서빙합니다 (포트를 쓰지 않음). 폴더를 읽을 수 없는 환경(macOS App Store 버전 등)에서는 `MODE=proxy PORT=4173 ./scripts/deploy-funnel.sh` 로 로컬 서버를 띄워 프록시합니다.
+- 기본(`MODE=auto`)은 먼저 `tailscaled` 가 빌드 폴더를 직접 서빙하게 해 보고, 실패하면 내 계정으로 도는 작은 정적 서버(`scripts/serve-static.mjs`, 기본 4173 포트)로 바꿔 Funnel 이 그쪽으로 프록시하게 합니다. macOS 앱 샌드박스·SELinux·snap 환경에서는 `tailscaled` 가 홈 폴더를 읽지 못해 **403 Forbidden** 이 나는데, 이 경우가 자동으로 처리됩니다. 처음부터 프록시로 하려면 `MODE=proxy`.
+- 로컬 서버는 Linux 에서는 systemd 사용자 서비스, macOS 에서는 LaunchAgent 로 등록되어 재부팅 후에도 유지됩니다.
 - Funnel 은 마운트 경로(`/langgraph`)를 떼고 요청을 넘기므로, 상대 경로(`base: './'`)로 빌드된 이 앱은 하위 경로에서도 그대로 동작합니다.
 - 처음 쓰는 tailnet 이면 관리 콘솔에서 MagicDNS·HTTPS 인증서·Funnel 을 켜야 합니다 (`tailscale funnel` 이 안내 링크를 보여 줍니다).
-- 내리기: `tailscale funnel --set-path /langgraph off`. `tailscale funnel reset` 은 다른 앱의 설정까지 지우니 쓰지 마세요.
+- 내리기: `./scripts/deploy-funnel.sh down` (이 앱의 경로와 로컬 서버만 내립니다). `tailscale funnel reset` 은 다른 앱의 설정까지 지우니 쓰지 마세요.
 
 단축키: VS Code 와 같이 `F5` 계속/일시정지, `F10` 한 스텝, `Shift+F10` 이전 스텝, `Ctrl+Shift+F5` 다시 시작 (`Space`, `→`, `←` 도 됩니다). 단계 슬라이더나 디버그 콘솔 항목으로 원하는 시점으로 이동합니다.
 URL 해시(`#/parallel/join` 등)로 시나리오와 변형을 바로 열 수 있습니다.
